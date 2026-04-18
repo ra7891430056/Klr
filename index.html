@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>KLR Professional Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    
+    <style>
+    .clock-container {
+    background: #ffffff;
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    max-width: fit-content;
+    margin-bottom: 25px;
+}
+
+.time-bold {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 1px;
+    font-family: 'Courier New', Courier, monospace; /* Digital look */
+}
+
+.date-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+        body { background-color: #f1f5f9; min-width: 1250px; display: flex; margin: 0; overflow-x: auto; font-family: 'Inter', sans-serif; }
+        
+        /* Sidebar: Fixed with Scrolling for long list */
+        .sidebar { 
+            width: 260px; 
+            height: 200vh; 
+            position: fixed; 
+            background: #ffffff; 
+            border-right: 1px solid #e2e8f0; 
+            display: flex;
+            flex-direction: column;
+            z-index: 1000; 
+        }
+        .sidebar-brand { padding: 20px 25px; font-weight: 800; font-size: 1.2rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
+        
+        .sidebar-menu { 
+            overflow-y: auto; 
+            flex-grow: 1; 
+            padding: 10px 0;
+        }
+        /* Custom Scrollbar for Sidebar */
+        .sidebar-menu::-webkit-scrollbar { width: 5px; }
+        .sidebar-menu::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .nav-link { color: #64748b; padding: 10px 25px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; font-size: 13.5px; }
+        .nav-link:hover, .nav-link.active { background: #f8fafc; color: #2563eb; font-weight: 600; }
+        .nav-link i { width: 28px; font-size: 1rem; }
+
+        /* Main Panel */
+        .main-panel { margin-left: 260px; width: calc(100% - 260px); padding: 35px; }
+
+        /* Quick Access */
+        .quick-section { margin-bottom: 35px; }
+        .quick-grid { display: flex; gap: 12px; }
+        .quick-card { 
+            width: 175px; height: 55px; background: white; border-radius: 10px; 
+            display: flex; align-items: center; padding: 0 12px; cursor: pointer;
+            border: 1px solid #e2e8f0; transition: 0.2s;
+        }
+        .quick-card:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.05); }
+        .quick-card i { font-size: 1rem; margin-right: 10px; }
+        .quick-card span { font-size: 13px; font-weight: 600; }
+
+        /* 4 Cards per Row Grid */
+        .card-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); /* Exactly 4 columns */
+            gap: 20px; 
+        }
+
+        /* White Stat Cards */
+        .stat-card-white { 
+            height: 120px; border-radius: 16px; padding: 20px; 
+            background: #ffffff; color: #1e293b; cursor: pointer; display: flex; align-items: center;
+            border: 1px solid #e2e8f0; transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            animation: slideUp 0.4s ease forwards;
+        }
+        .stat-card-white:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.08);
+            border-color: #2563eb;
+        }
+        .icon-box {
+            width: 55px; height: 55px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; margin-right: 15px;
+        }
+
+        .card-info h3 { font-size: 12px; font-weight: 700; margin: 0; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-info p { font-size: 17px; font-weight: 700; margin: 0; color: #1e293b; }
+
+        /* Search */
+        .search-container { max-width: 400px; margin-bottom: 30px; position: relative; }
+        .search-input { border-radius: 10px; padding: 10px 15px 10px 40px; border: 1px solid #e2e8f0; }
+        .search-icon { position: absolute; left: 15px; top: 13px; color: #94a3b8; }
+
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Icon Colors */
+        .t-blue { color: #2563eb; background: #eff6ff; }
+        .t-green { color: #16a34a; background: #f0fdf4; }
+        .t-orange { color: #ea580c; background: #fff7ed; }
+        .t-red { color: #dc2626; background: #fef2f2; }
+        .t-purple { color: #9333ea; background: #faf5ff; }
+        .t-teal { color: #0d9488; background: #f0fdfa; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar shadow-sm">
+        <div class="sidebar-brand">KLR PREMIUM</div>
+        
+         <div class="clock-container shadow-sm">
+            <div id="liveTime" class="time-bold">00:00:00</div>
+            <div id="liveDate" class="date-text">Loading Date...</div>
+         </div>
+
+        <div class="sidebar-menu" id="sidebarMenu">
+            <div class="nav-link active" onclick="showPage('dashboard')"><i class="fa fa-th-large"></i> Dashboard</div>
+            </div>
+    </aside>
+
+    <div class="main-panel">
+        
+        <div id="dashboard" class="page active">
+            
+            <div class="quick-section">
+                <h6 class="text-secondary fw-bold mb-3 small text-uppercase">Quick Access</h6>
+                <div class="quick-grid">
+                    <div class="quick-card" onclick="showPage('page1')"><i class="fa fa-plus-circle t-blue p-2 rounded"></i> <span>OPD Entry</span></div>
+                    <div class="quick-card" onclick="showPage('page2')"><i class="fa fa-id-card t-green p-2 rounded"></i> <span>ID Card</span></div>
+                    <div class="quick-card" onclick="showPage('page4')"><i class="fa fa-print t-red p-2 rounded"></i> <span>Exam Maker</span></div>
+                    <div class="quick-card" onclick="showPage('page19')"><i class="fa fa-database t-orange p-2 rounded"></i> <span>Backup</span></div>
+                    <div class="quick-card" onclick="showPage('page20')"><i class="fa fa-cog t-purple p-2 rounded"></i> <span>Config</span></div>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <i class="fa fa-search search-icon"></i>
+                <input type="text" id="cardSearch" class="form-control search-input shadow-sm" placeholder="Search 20+ modules..." onkeyup="filterCards()">
+             </div>
+
+            <div class="card-grid" id="cardContainer"></div>
+        </div>
+
+        <div id="pageContainer"></div>
+
+    </div>
+<script>
+    const modules = [
+        {id: 1, name: "Hospital", desc: "OPD & Billing", icon: "fa-hospital", color: "t-blue"},
+        {id: 2, name: "Library", desc: "Book Seats", icon: "fa-book-open", color: "t-green"},
+        {id: 3, name: "School", desc: "Student Info", icon: "fa-graduation-cap", color: "t-orange"},
+        {id: 4, name: "CBT Exam", desc: "Paper Maker", icon: "fa-laptop-code", color: "t-red"},
+        {id: 5, name: "Accounts", desc: "GST Billing", icon: "fa-wallet", color: "t-purple"},
+        {id: 6, name: "Pharmacy", desc: "Stock Mgr", icon: "fa-pills", color: "t-teal"},
+        {id: 7, name: "Attendance", desc: "Staff Logs", icon: "fa-user-check", color: "t-blue"},
+        {id: 8, name: "Inventory", desc: "Asset List", icon: "fa-boxes-stacked", color: "t-green"},
+        {id: 9, name: "Transport", desc: "Bus Routes", icon: "fa-bus", color: "t-orange"},
+        {id: 10, name: "Payroll", desc: "Salary Slips", icon: "fa-money-check-dollar", color: "t-red"},
+        {id: 11, name: "Hostel", desc: "Room Status", icon: "fa-bed", color: "t-purple"},
+        {id: 12, name: "Laboratory", desc: "Test Results", icon: "fa-microscope", color: "t-teal"},
+        {id: 13, name: "Front Office", desc: "Enquiries", icon: "fa-headset", color: "t-blue"},
+        {id: 14, name: "Events", desc: "Activities", icon: "fa-calendar-days", color: "t-green"},
+        {id: 15, name: "Security", desc: "CCTV Logs", icon: "fa-shield-halved", color: "t-orange"},
+        {id: 16, name: "Visitors", desc: "Gate Pass", icon: "fa-id-badge", color: "t-red"},
+        {id: 17, name: "Feedback", desc: "User Reviews", icon: "fa-comment-dots", color: "t-purple"},
+        {id: 18, name: "Reports", desc: "Annual Data", icon: "fa-chart-line", color: "t-teal"},
+        {id: 19, name: "Database", desc: "Cloud Sync", icon: "fa-server", color: "t-blue"},
+        {id: 20, name: "Settings", desc: "App Config", icon: "fa-gears", color: "t-green"}
+    ];
+
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    const cardContainer = document.getElementById('cardContainer');
+    const pageContainer = document.getElementById('pageContainer');
+
+    modules.forEach(m => {
+        // 1. Sidebar Links generate karein
+        sidebarMenu.innerHTML += `<div class="nav-link" onclick="showPage('page${m.id}')"><i class="fa ${m.icon}"></i> ${m.name}</div>`;
+        
+        // 2. Dashboard Cards generate karein
+        cardContainer.innerHTML += `
+            <div class="card-wrapper" data-name="${m.name.toLowerCase()}">
+                <div class="stat-card-white" onclick="showPage('page${m.id}')">
+                    <div class="icon-box ${m.color}">
+                        <i class="fa ${m.icon}"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3>${m.name}</h3>
+                        <p>${m.desc}</p>
+                    </div>
+                </div>
+            </div>`;
+
+        // 3. Custom Logic for Pages
+        let customContent = `<div class="py-5 text-center bg-light rounded-4 border-2 border-dashed"><p class="text-muted">Logic for ${m.name} (${m.desc}) goes here.</p></div>`;
+
+        if(m.id === 1) { // Hospital Page Customization
+    customContent = `
+        <style>
+            .tabs-wrapper {
+                display: flex;
+                gap: 8px;
+                background: #f8fafc;
+                padding: 8px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 25px;
+            }
+            .tab-box-btn {
+                flex: 1;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                color: #475569;
+                padding: 12px 5px;
+                border-radius: 8px;
+                font-weight: 800; /* Extra Bold Text */
+                font-size: 13px;
+                text-transform: uppercase;
+                transition: 0.3s;
+                display: flex;
+                flex-direction: column; /* Icon upar, text niche */
+                align-items: center;
+                gap: 5px;
+            }
+            .tab-box-btn:hover { background: #f1f5f9; }
+            .tab-box-btn.active {
+                background: #2563eb;
+                color: #ffffff;
+                border-color: #2563eb;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            }
+            .tab-box-btn i { font-size: 1.2rem; }
+            
+            .content-box {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 15px;
+                padding: 25px;
+                min-height: 300px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            }
+        </style>
+
+        <div class="nav tabs-wrapper" id="hospitalTabs" role="tablist">
+            <button class="tab-box-btn active" data-bs-toggle="tab" data-bs-target="#h-opd">
+                <i class="fa fa-user-plus"></i> OPD ENTRY
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-bill">
+                <i class="fa fa-file-invoice-dollar"></i> BILLING
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-lab">
+                <i class="fa fa-microscope"></i> LAB REPORTS
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-pharma">
+                <i class="fa fa-pills"></i> PHARMACY
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-ward">
+                <i class="fa fa-bed"></i> WARD STATUS
+            </button>
+        </div>
+
+        <div class="tab-content content-box" id="hospitalTabsContent">
+            
+            
+               <div  class="tab-pane fade show active" id="h-opd">
+                     <h5 class="fw-bold">Ward & Bed Occupancy</h5>
+                 <iframe src="sba.html" width="750" height="1200"></iframe>
+                
+               </div>
+
+            <div class="tab-pane fade" id="h-bill">
+                <h5 class="fw-bold">Patient Billing</h5>
+                <p class="text-muted">Enter Patient ID to generate invoice.</p>
+                <div class="input-group mb-3 w-50">
+                    <input type="text" class="form-control" placeholder="Search ID...">
+                    <button class="btn btn-success">Generate Bill</button>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="h-lab">
+                <h5 class="fw-bold">Laboratory Reports</h5>
+                <div class="alert alert-info small">Pending tests: 04</div>
+            </div>
+
+            <div class="tab-pane fade" id="h-pharma">
+                <h5 class="fw-bold">Pharmacy Stock</h5>
+                <button class="btn btn-sm btn-outline-dark">Check Inventory</button>
+            </div>
+
+            <div class="tab-pane fade" id="h-ward">
+                <h5 class="fw-bold">Ward & Bed Occupancy</h5>
+                <div class="d-flex gap-2">
+                    <div class="p-3 border rounded text-center" style="width:100px"><span class="d-block fw-bold">102</span><small>Occupied</small></div>
+                    <div class="p-3 border rounded text-center" style="width:100px"><span class="d-block fw-bold text-success">45</span><small>Available</small></div>
+                </div>
+            </div>
+
+        </div>`;
+}
+
+
+        // ... hospital wala if yahan khatam ho raha hai ...
+else if(m.id === 2) { // Library Page Customization (ID: 2)
+    customContent = `
+        <div class="row text-start">
+            <div class="col-md-4">
+                <div class="p-3 border rounded shadow-sm bg-white">
+                    <h6 class="fw-bold mb-3 text-primary"><i class="fa fa-book me-2"></i>Issue Book</h6>
+                    
+                    <label class="form-label small fw-bold">Book Title</label>
+                    <input type="text" id="bookTitle" class="form-control mb-2" placeholder="e.g. JavaScript Guide">
+                    
+                    <label class="form-label small fw-bold">Student Name</label>
+                    <input type="text" id="studentName" class="form-control mb-3" placeholder="Enter Name">
+                    
+                    <button class="btn btn-success w-100" onclick="issueBook()">
+                        <i class="fa fa-plus me-2"></i>Issue Book
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover border">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Book Title</th>
+                                <th>Issued To</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookList">
+                            <tr><td colspan="4" class="text-center text-muted">No books issued currently</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+}
+        
+        else if(m.id === 3) { // School Page with Tabs (ID: 3)
+    customContent = `
+        <ul class="nav nav-pills mb-4 shadow-sm p-2 bg-light rounded-pill" id="schoolTabs" role="tablist" style="width: fit-content;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4" id="info-tab" data-bs-toggle="pill" data-bs-target="#tab-info" type="button">
+                    <i class="fa fa-info-circle me-2"></i>Student Info
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4" id="fees-tab" data-bs-toggle="pill" data-bs-target="#tab-fees" type="button">
+                    <i class="fa fa-money-bill-wave me-2"></i>Fees Management
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content border p-4 rounded-4 bg-white" id="schoolTabContent">
+            
+            <div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+                <h5 class="fw-bold mb-3">Add New Student</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><input type="text" class="form-control" placeholder="Student Name"></div>
+                    <div class="col-md-6"><input type="text" class="form-control" placeholder="Class/Section"></div>
+                    <div class="col-md-12"><button class="btn btn-primary px-4">Save Student</button></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-fees" role="tabpanel">
+                <h5 class="fw-bold mb-3">Collect Fees</h5>
+                <div class="input-group mb-3" style="max-width: 400px;">
+                    <input type="text" class="form-control" placeholder="Search Roll No...">
+                    <button class="btn btn-orange text-white bg-warning" type="button">Search</button>
+                </div>
+                <div class="alert alert-info">Enter Roll Number to see pending dues.</div>
+            </div>
+
+        </div>`;
+}
+
+        
+       else if(m.id === 4) { // CBT Exam Maker (ID: 4)
+    customContent = `
+        <style>
+            /* Boxed Tabs Styling */
+            .tabs-wrapper {
+                display: flex;
+                gap: 10px;
+                background: #f1f5f9;
+                padding: 10px;
+                border-radius: 15px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .tab-box-btn {
+                flex: 1; /* Sabhi tabs barabar width ke honge */
+                min-width: 150px;
+                background: #ffffff;
+                border: 2px solid #e2e8f0;
+                color: #475569;
+                padding: 12px 10px;
+                border-radius: 10px;
+                font-weight: 800; /* Extra Bold */
+                font-size: 14px;
+                text-transform: uppercase;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            .tab-box-btn:hover {
+                border-color: #cbd5e1;
+                background: #f8fafc;
+            }
+            .tab-box-btn.active {
+                background: #2563eb; /* Primary Blue */
+                color: #ffffff;
+                border-color: #2563eb;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            }
+            .tab-box-btn i { font-size: 1.1rem; }
+            
+            .content-box {
+                background: white;
+                border: 2px solid #e2e8f0;
+                border-radius: 15px;
+                padding: 30px;
+                min-height: 200px;
+            }
+        </style>
+
+        <div class="nav tabs-wrapper" id="boxedTabs" role="tablist">
+            <button class="tab-box-btn active" data-bs-toggle="tab" data-bs-target="#tab1">
+                <i class="fa fa-file-signature"></i> Setup
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#tab2">
+                <i class="fa fa-list-ol"></i> Questions
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#tab3">
+                <i class="fa fa-users-gear"></i> Students
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#tab4">
+                <i class="fa fa-clock"></i> Timing
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#tab5">
+                <i class="fa fa-square-check"></i> Room Expense
+            </button>
+        </div>
+
+        <div class="tab-content content-box" id="boxedTabsContent">
+            <div class="tab-pane fade show active" id="tab1">
+                <h4 class="fw-bold text-dark">Exam Configuration</h4>
+                <hr>
+                <p>Yahan exam ka basic setup aur instructions likhein.</p>
+            </div>
+            <div class="tab-pane fade" id="tab2">
+                <h4 class="fw-bold">Questions List</h4>
+                <p>Saare questions yahan dikhenge.</p>
+            </div>
+            <div class="tab-pane fade" id="tab3">
+                <h4 class="fw-bold">Select Students</h4>
+                <p>Students ki list select karein.</p>
+            </div>
+            <div class="tab-pane fade" id="tab4">
+                <h4 class="fw-bold">Timer Settings</h4>
+                <p>Start time aur duration set karein.</p>
+            </div>
+            <div class="tab-pane fade" id="tab5">
+                <h4 class="fw-bold">🏠 Room Expense Tracker</h4>
+                <iframe src="rs.html" width="750" height="900"></iframe>
+                <p>Passing marks aur result criteria.</p>
+            </div>
+        </div>`;
+}
+
+
+        
+        // 4. Pages HTML generate karein
+        pageContainer.innerHTML += `
+            <div id="page${m.id}" class="page">
+                <button class="btn btn-outline-dark btn-sm mb-4 px-4 rounded-pill shadow-sm" onclick="showPage('dashboard')">
+                    <i class="fa fa-arrow-left me-2"></i> Dashboard
+                </button>
+                <div class="bg-white p-5 rounded-4 border shadow-sm">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="icon-box ${m.color} me-3"><i class="fa ${m.icon}"></i></div>
+                        <h2 class="fw-bold m-0">${m.name} System</h2>
+                    </div>
+                    <hr>
+                    ${customContent}
+                </div>
+            </div>`;
+    });
+
+    // FUNCTIONS
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        const target = document.getElementById(pageId);
+        if(target) target.classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    
+    
+    function issueBook() {
+    const title = document.getElementById('bookTitle').value;
+    const student = document.getElementById('studentName').value;
+    const date = new Date().toLocaleDateString('en-IN');
+
+    if(!title || !student) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    const list = document.getElementById('bookList');
+    
+    // Default message hatane ke liye
+    if(list.innerHTML.includes("No books issued currently")) {
+        list.innerHTML = "";
+    }
+
+    // New Row Entry
+    list.innerHTML += `
+        <tr>
+            <td><strong>${title}</strong></td>
+            <td>${student}</td>
+            <td>${date}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
+                    Return
+                </button>
+            </td>
+        </tr>`;
+
+    // Inputs clear karein
+    document.getElementById('bookTitle').value = "";
+    document.getElementById('studentName').value = "";
+}
+
+
+    function filterCards() {
+        let input = document.getElementById('cardSearch').value.toLowerCase();
+        document.querySelectorAll('.card-wrapper').forEach(wrap => {
+            let name = wrap.getAttribute('data-name');
+            wrap.style.display = name.includes(input) ? "block" : "none";
+        });
+    }
+
+    function updateClock() {
+        const now = new Date();
+        let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+        let ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        document.getElementById('liveTime').innerHTML = `${h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s} <span style="font-size:14px">${ampm}</span>`;
+        document.getElementById('liveDate').innerText = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+    
+</script>
+
+   
+</body>
+</html>
+

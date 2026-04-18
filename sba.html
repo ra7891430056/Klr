@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=1.0">
+    <title>Springboard Academy - Multi-Design Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- BASE RESET --- */
+        body { background: #f0f2f5; margin: 0; padding: 20px; }
+        .no-print { max-width: 650px; margin: 0 auto 20px; background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #printArea { display: flex; justify-content: center; }
+        .result-card { width: 210mm; background: white; padding: 40px; box-sizing: border-box; display: none; position: relative; min-height: 250mm; }
+
+        /* =========================================
+           TEMPLATE 1: MAROON CLASSIC (Professional)
+           ========================================= */
+        .template-1 { border: 2px solid #d94141; font-family: 'Times New Roman', serif; }
+        .template-1 h1 { color: #d94141; font-size: 30px; text-decoration: underline; }
+        .template-1 .info-section { border: 1px solid #d94141; background: #fff8f8; }
+        .template-1 th { background: #d94141; color: white; text-transform: uppercase; }
+        .template-1 .test-title { border-left: 8px solid #d94141; color: #d94141; font-style: italic; }
+
+        /* =========================================
+           TEMPLATE 2: NAVY MODERN (Clean/Tech)
+           ========================================= */
+        .template-2 { border: 5px solid #2c3e50; font-family: 'Segoe UI', sans-serif; }
+        .template-2 h1 { color: #2c3e50; font-weight: 900; letter-spacing: 2px; }
+        .template-2 .info-section { border: none; background: #f1f4f7; border-radius: 15px; }
+        .template-2 th { background: #2c3e50; color: white; border-radius: 5px 5px 0 0; }
+        .template-2 td { border: none; border-bottom: 1px solid #eee; }
+        .template-2 .side-logo { filter: grayscale(100%); }
+
+    /* =========================================
+   TEMPLATE 3: HALF-PAGE COMPACT (Green)
+   ========================================= */
+.template-3 { 
+    border: 2px solid #27ae60; 
+    font-family: 'Arial', sans-serif; 
+    color: #333;
+    padding: 15px !important; /* Padding kam ki gayi hai */
+    min-height: 140mm !important; /* A4 ka lagbhag aadha hissa */
+    max-height: 148mm !important; /* Strict limit for half page */
+    overflow: hidden;
+}
+
+/* Header Section - Small Size */
+.template-3 .header-container { 
+    margin-bottom: 10px; 
+}
+.template-3 .side-logo { 
+    width: 60px; height: 60px; /* Logo size chota kiya */
+}
+.template-3 h1 { 
+    color: #27ae60; 
+    font-size: 20px; /* Size reduced */
+    margin: 0;
+}
+.template-3 .header-text p { font-size: 12px; margin: 2px 0; }
+.template-3 .header-text small { font-size: 10px; }
+
+/* Compact Info Section */
+.template-3 .info-section { 
+    background: transparent; 
+    border: 1px solid #eee; 
+    padding: 8px 12px;
+    gap: 5px;
+    margin-bottom: 10px;
+    grid-template-columns: 1fr 1fr;
+}
+.template-3 .info-item { 
+    font-size: 12px; /* Text size chota kiya */
+}
+.template-3 .info-item b { 
+    color: #27ae60; 
+    width: 90px;
+}
+
+/* Compact Table Section */
+.template-3 .test-title { 
+    background: #f1f8f4; 
+    color: #27ae60; 
+    border-left: 3px solid #27ae60; 
+    font-size: 13px;
+    padding: 4px 10px;
+    margin-top: 10px;
+}
+.template-3 th { 
+    background: #27ae60; 
+    color: white; 
+    padding: 6px; /* Cell padding kam ki */
+    font-size: 12px;
+}
+.template-3 td { 
+    padding: 6px; 
+    font-size: 12px;
+    border: 1px solid #f1f1f1;
+}
+
+/* Small Ad Banner & Footer */
+.template-3 .ad-banner { 
+    padding: 8px;
+    margin-top: 10px;
+    font-size: 11px;
+}
+.template-3 .ad-banner h4 { font-size: 13px; margin-bottom: 2px; }
+
+.template-3 .footer { 
+    position: relative; /* Fixed bottom se hatakar relative kiya */
+    margin-top: 15px;
+    bottom: 0;
+    padding-top: 5px;
+    font-size: 10px;
+}
+
+/* Print Logic for Half Page */
+@media print {
+    .template-3 {
+        width: 210mm !important;
+        height: 100mm !important; /* Half A4 */
+        border: 2px solid #27ae60 !important;
+        float: none;
+    }
+}
+
+       /* =========================================
+           TEMPLATE 4: ROYAL GOLD (Minimalist)
+           ========================================= */
+        .template-4 { border: 2px solid #d4af37; font-family: 'Palatino', serif; }
+        .template-4 h1 { color: #996515; font-variant: small-caps; }
+        .template-4 .info-section { background: transparent; border-bottom: 2px solid #d4af37; border-radius: 0; }
+        .template-4 .info-item b { color: #996515; }
+        .template-4 th { border: none; border-bottom: 2px solid #d4af37; background: white; color: #996515; }
+        .template-4 td { border: none; border-bottom: 1px solid #f2e6c2; }
+
+        /* =========================================
+           TEMPLATE 5: PURPLE BOLD (Modern Edge)
+           ========================================= */
+        .template-5 { border: 5px solid #8e44ad; font-family: 'Verdana', sans-serif; border-radius: 40px; }
+        .template-5 h1 { color: #8e44ad; text-shadow: 2px 2px #f3e5f5; }
+        .template-5 .info-section { grid-template-columns: 1fr 1fr; background: #f3e5f5; border: none; }
+        .template-5 th { background: #8e44ad; color: white; }
+        .template-5 .ad-banner { background: #8e44ad; color: white; border: none; }
+        .template-5 .ad-banner h4 { color: white; }
+
+        /* --- COMMON INNER STRUCTURES --- */
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .side-logo { width: 100px; height: 100px; object-fit: contain; }
+        .header-text { text-align: center; flex: 1; }
+        .info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px; margin-bottom: 25px; }
+        .info-item { font-size: 16px; padding: 5px 0; }
+        .info-item b { width: 130px; display: inline-block; }
+        .test-title { padding: 10px; font-weight: bold; margin-top: 10px; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border: 1px solid #ddd; }
+        .ad-banner { margin-top: 10px; padding: 20px; border: 2px dashed #ccc; display: flex; justify-content: space-between; align-items: center; border-radius: 10px; }
+        .footer { position: absolute; bottom: 10px; left: 40px; right: 40px; text-align: center; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 20px; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            .result-card { display: block !important; box-shadow: none; width: 100%; height: 100%; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print">
+    <h3>Springboard Academy - Marksheet Portal</h3>
+    <input type="text" id="rollNo" placeholder="Enter Roll No" style="padding:12px; width:200px; border-radius:8px; border:1px solid #ccc;">
+    <button onclick="generateResult()" style="padding:12px 25px; background:#d94141; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Search</button>
+    <button onclick="window.print()" style="padding:12px 25px; background:#27ae60; color:white; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">Print Report</button>
+</div>
+
+<div id="printArea">
+    <div id="marksheet" class="result-card">
+        
+        <div class="header-container">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN6_DOpNqFUZVsnYxemI9yGrnVMSMae5pPHnnc15WJGdSrdA_f4h9utwHXbGxjKHEl&s=10" alt="Logo" class="side-logo">
+            <div class="header-text">
+                <h1>Springboard Academy</h1>
+                <p>An Institute for IAS and RAS</p>
+                <small>"A Legacy of Excellence in Civil Services Coaching"</small>
+            </div>
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN6_DOpNqFUZVsnYxemI9yGrnVMSMae5pPHnnc15WJGdSrdA_f4h9utwHXbGxjKHEl&s=10" alt="Logo" class="side-logo">
+        </div>
+
+        <div class="info-section">
+            <div class="info-item"><b>Student Name:</b> <span id="sName"></span></div>
+            <div class="info-item"><b>Father Name:</b> <span id="fName"></span></div>
+            <div class="info-item"><b>Roll No:</b> <span id="sID"></span></div>
+            <div class="info-item"><b>Course:</b> <span id="sCourse"></span></div>
+            <div class="info-item"><b>Mobile:</b> <span id="sMob"></span></div>
+            <div class="info-item"><b>Batch Name:</b> <span id="sBatch"></span></div>
+        </div>
+
+        <div id="testResults"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+    <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fff;">
+        <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #d94141;"><i class="fas fa-bullhorn"></i> Important Notice</h4>
+        <p style="font-size: 11px; margin: 0; color: #555;">Kripya agle test ki taiyari syllabus ke anusar karein. Answer key portal par upload kar di gayi hai.</p>
+    </div>
+
+    <div style="border: 1px dashed #27ae60; padding: 10px; border-radius: 8px; background: #f1f8f4;">
+        <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #27ae60;">🚀 Admission Open</h4>
+        <p style="font-size: 11px; margin: 0; color: #555;">UPSC/RAS Foundation Batch 2026. Join Springboard for Success!</p>
+    </div>
+</div>
+
+<div class="social-links" style="text-align: right; margin-top: 5px;">
+    <a href="#" style="color:#d94141; margin-left:10px;"><i class="fab fa-youtube"></i></a>
+    <a href="#" style="color:#d94141; margin-left:10px;"><i class="fab fa-telegram"></i></a>
+    <a href="#" style="color:#d94141; margin-left:10px;"><i class="fab fa-instagram"></i></a>
+</div>
+
+
+        <div class="footer">
+            <p>Address: Plot No. 12, Gandhi Nagar, Jaipur | Website: www.springboardindia.com</p>
+            <p>* Computer Generated Document. No Signature Required.</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // 👈 CHANGE DEFAULT STYLE HERE (template-1 to template-5)
+    const DEFAULT_DESIGN = "template-1"; 
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyCuXFwrxRswCuyp7kvjNPF2Rnv2pIfcEAw",
+  authDomain: "sba-academy-2006.firebaseapp.com",
+  projectId: "sba-academy-2006",
+  storageBucket: "sba-academy-2006.firebasestorage.app",
+  messagingSenderId: "877157856362",
+  appId: "1:877157856362:web:86c406e135e83682598613"
+};
+      const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.generateResult = async () => {
+        const id = document.getElementById('rollNo').value.trim();
+        if(!id) return;
+
+        const qS = query(collection(db, "students"), where("shortID", "==", id));
+        const snapS = await getDocs(qS);
+
+        if(!snapS.empty) {
+            const d = snapS.docs[0].data();
+            document.getElementById('sName').innerText = d.name;
+            document.getElementById('fName').innerText = d.fName;
+            document.getElementById('sID').innerText = d.shortID;
+            document.getElementById('sCourse').innerText = d.course;
+            document.getElementById('sMob').innerText = d.mobile.substring(0,2) + "******" + d.mobile.substring(8);
+            document.getElementById('sBatch').innerText = d.batch || 'General Batch';
+            
+            await fetchTests(id);
+            
+            const card = document.getElementById('marksheet');
+            card.className = "result-card " + DEFAULT_DESIGN; // Apply Unique Style
+            card.style.display = "block";
+        } else {
+            alert("No Student Found!");
+        }
+    };
+
+    async function fetchTests(sid) {
+    const qM = query(collection(db, "results"), where("studentID", "==", sid));
+    const snapM = await getDocs(qM);
+    const container = document.getElementById('testResults');
+    container.innerHTML = "";
+
+    snapM.forEach(doc => {
+        const data = doc.data();
+        let html = `<div class="test-title">EXAMINATION: ${data.testName || 'Regular Test'}</div>`;
+        html += `<table><thead><tr><th>Subject</th><th>Marks</th></tr></thead><tbody>`;
+        
+        if(data.subjects) {
+            data.subjects.forEach(s => {
+                // Yahan se '/ 100' hata diya gaya hai
+                html += `<tr><td>${s.name}</td><td>${s.marks}</td></tr>`;
+            });
+        } else {
+            // Yahan se bhi '/ 100' hata diya gaya hai
+            html += `<tr><td>${data.subject}</td><td>${data.marks}</td></tr>`;
+        }
+        
+        html += `</tbody></table>`;
+        container.innerHTML += html;
+    });
+}
+
+</script>
+</body>
+</html>

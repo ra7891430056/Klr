@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Expense Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  body { 
+    font-family: Arial, sans-serif; 
+    background: #f4f7fb; 
+    margin: 0; 
+    padding: 20px; 
+    transition: all 0.3s ease;
+  }
+  h2 { text-align: center; color: #333; }
+  .container { 
+    max-width: 900px; 
+    margin: auto; 
+    background: #fff; 
+    border-radius: 10px; 
+    padding: 20px; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+  input, select, button, textarea { padding: 8px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; transition: background 0.3s, color 0.3s; }
+  textarea { flex: 1 1 100%; resize: none; height: 40px; }
+  button { background: #007bff; color: #fff; cursor: pointer; border: none; }
+  button:hover { background: #0056b3; }
+  table { width: 95%; border-collapse: collapse; margin-top: 15px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  th { background: #007bff; color: white; }
+  .summary { margin-top: 20px; background: #e9f5ff; padding: 10px; border-radius: 6px; }
+  .summary h3 { margin: 5px 0; }
+  .btn-group { margin-top: 15px; text-align: center; }
+  .btn-group button { margin: 5px; }
+
+  /* Dark Mode */
+  body.dark { background: #121212; color: #f1f1f1; }
+  body.dark .container { background: #1e1e1e; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+  body.dark h2 { color: #fff; }
+  body.dark input, body.dark select, body.dark textarea { background: #2a2a2a; color: #f1f1f1; border: 1px solid #555; }
+  body.dark button { background: #2196f3; }
+  body.dark th { background: #333; color: #fff; }
+  body.dark td { border-color: #555; }
+  body.dark .summary { background: #252525; color: #f1f1f1; }
+  body.dark .toggle-dark { background: #333; color: #fff; }
+
+  /* Thermal print style */
+  .thermal { font-family: "Courier New", monospace; width: 300px; line-height: 1.2; }
+  .thermal table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .thermal th, .thermal td { border: 1px solid #000; padding: 4px; font-size: 12px; text-align: left; }
+  .thermal th { background: #ccc; }
+  .thermal h2, .thermal h3 { text-align: center; font-size: 14px; margin: 2px 0; }
+
+  /* Dark mode toggle button */
+  .toggle-dark {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  }
+  
+    /* ... your existing styles ... */
+
+  /* PRINT STYLES */
+  @media print {
+    /* Hide buttons, the input form, and the dark mode toggle */
+    .btn-group, 
+    #expenseForm, 
+    .toggle-dark, 
+    title {
+      display: none !important;
+    }
+
+    /* Reset background and text colors for printing */
+    body {
+      background: white !important;
+      color: black !important;
+      padding: 0;
+    }
+
+    .container {
+      box-shadow: none !important;
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Ensure tables take up full width and look clean */
+    table {
+      border: 1px solid #000;
+    }
+    
+    th {
+      background: #f0f0f0 !important; /* Light gray for headers instead of blue */
+      color: black !important;
+    }
+
+    /* Prevent tables from breaking across pages awkwardly */
+    tr {
+      page-break-inside: avoid;
+    }
+
+    h3 {
+      margin-top: 20px;
+      border-bottom: 1px solid #ccc;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<button class="toggle-dark" id="darkModeBtn" title="Toggle Dark Mode">🌙</button>
+
+<h2>🏠 Room Expense Tracker</h2>
+<div class="container" id="mainContainer">
+  <form id="expenseForm">
+    <input type="date" id="date" required>
+    <select id="person" required>
+      <option value="">Select Person</option>
+      <option value="Rahul">Rahul</option>
+      <option value="Sumit">Sumit</option>
+      <option value="Other">Other</option>
+    </select>
+    <input type="number" id="amount" placeholder="Enter Amount" required min="0">
+    <textarea id="note" placeholder="Enter Notes (optional)"></textarea>
+    <button type="submit">Add Expense</button>
+  </form>
+
+  <div id="tablesContainer">
+    <h3>💰 Rahul's Expenses</h3>
+    <table id="tableRahul">
+      <thead><tr><th>S.No</th><th>Date</th><th>Amount (₹)</th><th>Notes</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>💰 Sumit's Expenses</h3>
+    <table id="tableSumit">
+      <thead><tr><th>S.No</th><th>Date</th><th>Amount (₹)</th><th>Notes</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>💰 Other's Expenses</h3>
+    <table id="tableOther">
+      <thead><tr><th>S.No</th><th>Date</th><th>Amount (₹)</th><th>Notes</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="summary">
+    <h3>💵 Total Expense:</h3>
+    <p>Rahul: ₹<span id="rahulTotal">0</span></p>
+    <p>Sumit: ₹<span id="sumitTotal">0</span></p>
+    <p>Other: ₹<span id="otherTotal">0</span></p>
+    <h3>🧾 Overall Total: ₹<span id="overallTotal">0</span></h3>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" onclick="downloadPDF()">📄 Download PDF</button>
+    <button type="button" onclick="printData()">🖨️ Print</button>
+    <button type="button" onclick="thermalPrint()">🧾 Thermal Print</button>
+    <button type="button" onclick="shareReport()">🔗 Share</button>
+    <button type="button" onclick="downloadUpdatedHTML()">⬇️ Download HTML</button>
+    <button type="button" onclick="resetData()">🗑️ Reset (Password)</button>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('expenseForm');
+const tables = {
+  Rahul: document.querySelector('#tableRahul tbody'),
+  Sumit: document.querySelector('#tableSumit tbody'),
+  Other: document.querySelector('#tableOther tbody')
+};
+
+let data = JSON.parse(localStorage.getItem('expensesData')) || { Rahul: [], Sumit: [], Other: [] };
+
+window.addEventListener('load', () => {
+  Object.keys(data).forEach(person => {
+    data[person].forEach(entry => addRow(person, entry));
+  });
+  updateTotals();
+  applySavedTheme();
+});
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const date = document.getElementById('date').value;
+  const person = document.getElementById('person').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const note = document.getElementById('note').value.trim();
+  if (!date || !person || isNaN(amount)) return;
+
+  const entry = { date, amount, note };
+  data[person].push(entry);
+  localStorage.setItem('expensesData', JSON.stringify(data));
+
+  addRow(person, entry);
+  updateTotals();
+  form.reset();
+});
+
+function addRow(person, entry) {
+  const tbody = tables[person];
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${tbody.children.length + 1}</td>
+    <td>${entry.date}</td>
+    <td>₹${entry.amount.toFixed(2)}</td>
+    <td>${entry.note || '-'}</td>
+  `;
+  tbody.appendChild(row);
+}
+
+function updateTotals() {
+  let totalRahul = data.Rahul.reduce((sum, e) => sum + e.amount, 0);
+  let totalSumit = data.Sumit.reduce((sum, e) => sum + e.amount, 0);
+  let totalOther = data.Other.reduce((sum, e) => sum + e.amount, 0);
+  let overall = totalRahul + totalSumit + totalOther;
+
+  document.getElementById('rahulTotal').textContent = totalRahul.toFixed(2);
+  document.getElementById('sumitTotal').textContent = totalSumit.toFixed(2);
+  document.getElementById('otherTotal').textContent = totalOther.toFixed(2);
+  document.getElementById('overallTotal').textContent = overall.toFixed(2);
+}
+
+// 📤 SHARE FUNCTION
+function shareReport() {
+  const totalRahul = document.getElementById('rahulTotal').textContent;
+  const totalSumit = document.getElementById('sumitTotal').textContent;
+  const totalOther = document.getElementById('otherTotal').textContent;
+  const overall = document.getElementById('overallTotal').textContent;
+  const text = `🏠 Room Expense Summary\nRahul: ₹${totalRahul}\nSumit: ₹${totalSumit}\nOther: ₹${totalOther}\n💵 Total: ₹${overall}`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Room Expense Report', text });
+  } else {
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+}
+
+// 💾 DOWNLOAD UPDATED HTML
+function downloadUpdatedHTML() {
+  const htmlContent = document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'Room_Expense_Tracker_Updated.html';
+  link.click();
+}
+
+// 📄 PDF DOWNLOAD
+async function downloadPDF() {
+  const pdfContainer = document.createElement('div');
+  pdfContainer.style.padding = "20px";
+  pdfContainer.style.background = "#fff";
+  const heading = document.createElement('h2');
+  heading.textContent = "🏠 Room Expense Report";
+  heading.style.textAlign = "center";
+  pdfContainer.appendChild(heading);
+  const tablesClone = document.getElementById('tablesContainer').cloneNode(true);
+  pdfContainer.appendChild(tablesClone);
+  const summaryClone = document.querySelector('.summary').cloneNode(true);
+  pdfContainer.appendChild(summaryClone);
+  document.body.appendChild(pdfContainer);
+
+  const canvas = await html2canvas(pdfContainer, { scale: 2 });
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jspdf.jsPDF('p', 'pt', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const imgHeight = (canvas.height * pageWidth) / canvas.width;
+  pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight);
+  pdf.save('Room_Expense.pdf');
+  document.body.removeChild(pdfContainer);
+}
+
+function printData() {
+  const printContainer = document.createElement('div');
+  printContainer.innerHTML = `
+    <h2 style="text-align:center;">🏠 Room Expense Tracker</h2>
+    ${document.getElementById('tablesContainer').outerHTML}
+    ${document.querySelector('.summary').outerHTML}
+  `;
+  
+}
+
+function thermalPrint() {
+  const thermalContainer = document.createElement('div');
+  thermalContainer.className = 'thermal';
+  thermalContainer.innerHTML = `
+    <h2>Room Expense Report</h2>
+    ${document.getElementById('tablesContainer').outerHTML}
+    ${document.querySelector('.summary').outerHTML}
+  `;
+  const win = window.open('', '', 'width=350,height=600');
+  win.document.write('<html><head><title>Thermal Print</title></head><body>');
+  win.document.write('<style>body{font-family:"Courier New",monospace;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:3px;font-size:12px;text-align:left;}th{background:#eee;}</style>');
+  win.document.write(thermalContainer.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+
+function resetData() {
+  const pass = prompt("Enter password to clear data:");
+  if (pass === "1234") {
+    localStorage.removeItem('expensesData');
+    location.reload();
+  } else if (pass) {
+    alert("❌ Wrong password!");
+  }
+}
+
+// 🌙 DARK MODE FUNCTIONALITY
+const darkModeBtn = document.getElementById('darkModeBtn');
+
+darkModeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  darkModeBtn.textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+});
+
+function applySavedTheme() {
+  const savedTheme = localStorage.getItem('darkMode');
+  if (savedTheme === 'enabled') {
+    document.body.classList.add('dark');
+    darkModeBtn.textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark');
+    darkModeBtn.textContent = '🌙';
+  }
+}
+  
+  function printData() {
+  window.print();
+}
+
+</script>
+
+</body>
+</html>
