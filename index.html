@@ -217,7 +217,109 @@
         // 3. Custom Logic for Pages
         let customContent = `<div class="py-5 text-center bg-light rounded-4 border-2 border-dashed"><p class="text-muted">Logic for ${m.name} (${m.desc}) goes here.</p></div>`;
 
-    
+      if(m.id === 1) { // Hospital Page Customization
+    customContent = `
+        <style>
+            .tabs-wrapper {
+                display: flex;
+                gap: 8px;
+                background: #f8fafc;
+                padding: 8px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 25px;
+            }
+            .tab-box-btn {
+                flex: 1;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                color: #475569;
+                padding: 12px 5px;
+                border-radius: 8px;
+                font-weight: 800; /* Extra Bold Text */
+                font-size: 13px;
+                text-transform: uppercase;
+                transition: 0.3s;
+                display: flex;
+                flex-direction: column; /* Icon upar, text niche */
+                align-items: center;
+                gap: 5px;
+            }
+            .tab-box-btn:hover { background: #f1f5f9; }
+            .tab-box-btn.active {
+                background: #2563eb;
+                color: #ffffff;
+                border-color: #2563eb;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            }
+            .tab-box-btn i { font-size: 1.2rem; }
+            
+            .content-box {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 15px;
+                padding: 25px;
+                min-height: 300px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            }
+        </style>
+
+        <div class="nav tabs-wrapper" id="hospitalTabs" role="tablist">
+            <button class="tab-box-btn active" data-bs-toggle="tab" data-bs-target="#h-opd">
+                <i class="fa fa-user-plus"></i> OPD ENTRY
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-bill">
+                <i class="fa fa-file-invoice-dollar"></i> BILLING
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-lab">
+                <i class="fa fa-microscope"></i> LAB REPORTS
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-pharma">
+                <i class="fa fa-pills"></i> PHARMACY
+            </button>
+            <button class="tab-box-btn" data-bs-toggle="tab" data-bs-target="#h-ward">
+                <i class="fa fa-bed"></i> WARD STATUS
+            </button>
+        </div>
+
+        <div class="tab-content content-box" id="hospitalTabsContent">
+            
+            
+               <div  class="tab-pane fade show active" id="h-opd">
+                     <h5 class="fw-bold">Ward & Bed Occupancy</h5>
+                 <iframe src="sba.html" width="750" height="1200"></iframe>
+                
+               </div>
+
+            <div class="tab-pane fade" id="h-bill">
+                <h5 class="fw-bold">Patient Billing</h5>
+                <p class="text-muted">Enter Patient ID to generate invoice.</p>
+                <div class="input-group mb-3 w-50">
+                    <input type="text" class="form-control" placeholder="Search ID...">
+                    <button class="btn btn-success">Generate Bill</button>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="h-lab">
+                <h5 class="fw-bold">Laboratory Reports</h5>
+                <div class="alert alert-info small">Pending tests: 04</div>
+            </div>
+
+            <div class="tab-pane fade" id="h-pharma">
+                <h5 class="fw-bold">Pharmacy Stock</h5>
+                <button class="btn btn-sm btn-outline-dark">Check Inventory</button>
+            </div>
+
+            <div class="tab-pane fade" id="h-ward">
+                <h5 class="fw-bold">Ward & Bed Occupancy</h5>
+                <div class="d-flex gap-2">
+                    <div class="p-3 border rounded text-center" style="width:100px"><span class="d-block fw-bold">102</span><small>Occupied</small></div>
+                    <div class="p-3 border rounded text-center" style="width:100px"><span class="d-block fw-bold text-success">45</span><small>Available</small></div>
+                </div>
+            </div>
+
+        </div>`;
+      }
 
         // ... hospital wala if yahan khatam ho raha hai ...
 else if(m.id === 2) { // Library Page Customization (ID: 2)
