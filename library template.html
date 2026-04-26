@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Pro Cloud - V5</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+       :root {
+            --bg-dark: #0A0E21;
+            --card-grad: linear-gradient(120deg, #ed15cd, #063380);
+            --orange: #FF7E5F;
+            --white: #ffffff;
+            --grey: #b0b0b0;
+            --green: #28A745;
+            --red: #dc3545;
+  
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 80px; }
+
+        /* Navigation */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #070a1a; display: flex; justify-content: space-around; padding: 12px; border-top: 3px solid #1ac7c4; z-index: 1000; }
+        .nav-item { text-align: center; color: var(--grey); font-size: 18px; cursor: pointer; }
+        .nav-item.active { color: var(--orange); font-weight: bold; }
+
+        .container { padding: 15px; }
+
+        /* Education Emoji Avatars */
+        .av-box { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+        .av-circle { 
+            min-width: 50px; height: 50px; border-radius: 50%; background: #ff21b1; 
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            cursor: pointer; border: 2px solid transparent; transition: 0.3s;
+        }
+        .av-circle.selected { border-color: var(--orange); background: var(--card-grad); transform: scale(1.1); }
+
+        /* Student Cards */
+      .record-card { 
+            background: var(--card-grad); border-radius: 15px; padding: 15px; 
+            margin-bottom: 12px; border-left: 4px solid var(--red); position: relative;
+        }
+
+        .status-paid { border-left-color: var(--green) !important; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 15px; }
+        .label { color: var(--grey); }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px; overflow-y: auto; }
+        .modal-content { background: var(--bg-dark); padding: 20px; border-radius: 20px; border: 1px solid var(--orange); max-width: 450px; margin: auto; }
+        
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #161b33; color: white; outline: none; }
+        .btn { padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; color: white; }
+        .btn-full { width: 100%; margin-top: 10px; }
+        .btn-edit { background: #007bff; }
+        .btn-pay { background: var(--green); }
+        .btn-msg { background: #25D366; }
+
+      /* Button */
+.receipt-btn {
+    background: linear-gradient(45deg, #6c5ce7, #00cec9);
+    color: #fff;
+    font-size: 11px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Hidden */
+.hidden {
+    display: none;
+}
+
+/* Main Receipt Box */
+#receipt-print {
+    background: #ffffff;
+    color: #2d3436;
+    padding: 20px;
+    width: 200px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    font-family: 'Poppins', sans-serif;
+    display: none;
+}
+
+/* Header (Top Left Logo + Title) */
+.receipt-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.receipt-logo {
+    font-size: 28px;
+}
+
+.receipt-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #6c5ce7;
+}
+
+/* Divider Line */
+.receipt-divider {
+    height: 2px;
+    background: linear-gradient(to right, #6c5ce7, #00cec9);
+    margin: 8px 0;
+    border-radius: 5px;
+}
+
+/* Compact Row (IMPORTANT FIX) */
+.receipt-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;              /* 👈 label & value close */
+    font-size: 13px;
+    margin: 2px 0;         /* 👈 less vertical gap */
+}
+
+/* Label */
+.receipt-label {
+    font-weight: 600;
+    min-width: 85px;       /* 👈 aligned & compact */
+}
+
+/* Value */
+.receipt-value {
+    color: #3e14e3;
+    font-weight: 500;
+}
+
+/* QR Section */
+#qr {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+/* Footer */
+.receipt-footer {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 8px;
+    color: #34343b;
+}
+
+  
+   </style>
+</head>
+<body>
+
+<header style="padding: 20px; background: #070a1a;">
+    <h2 style="color: var(--orange);">Library Manage</h2>
+</header>
+  
+<div class="container">
+    <div id="home-tab" class="tab-content">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;">
+            <div class="av-circle" style="flex-direction:column; background: #f5dd58; height:70px; width:auto; border-radius:12px; font-size:22px;" onclick="showTab('reg-tab')">📝<br>Reg</div>
+            <div class="av-circle" style="flex-direction:column; background: #58f5e8; height:70px; width:auto; border-radius:12px; font-size:22px;" onclick="showTab('rec-tab')">📚<br>History</div>
+            <div class="av-circle" style="flex-direction:column; background: #f53131; height:70px; width:auto; border-radius:12px; font-size:22px;" onclick="showTab('set-tab')">⚙️<br>Manage</div>
+        </div>
+        <div class="record-card status-paid">
+            <h4>Live Stats</h4>
+            <div class="row"><span>Total Students:</span> <span id="stat-total">0</span></div>
+            <div class="row"><span>Active Seats:</span> <span id="stat-active">0</span></div>
+        </div>
+    </div>
+
+    <div id="reg-tab" class="tab-content hidden">
+        <h3>New Registration</h3>
+        <p class="label">Choose Emoji Avatar</p>
+        <div class="av-box" id="av-picker"></div>
+        <form id="regForm">
+            <input type="text" id="sName" placeholder="Student Name" required>
+            <input type="text" id="fName" placeholder="Father Name" required>
+            <input type="text" id="seatNo" placeholder="Seat Number" required>
+            <input type="tel" id="mobile" placeholder="WhatsApp Number" required>
+            <input type="email" id="email" placeholder="Gmail ID" required>
+            <input type="date" id="admDate" required>
+            <button type="submit" class="btn btn-pay btn-full">Submit to Cloud</button>
+        </form>
+    </div>
+
+    <div id="rec-tab" class="tab-content hidden">
+        <input type="text" placeholder="Search records..." onkeyup="search(this.value, 'rec-list')">
+        <div id="rec-list"></div>
+    </div>
+
+    <div id="set-tab" class="tab-content hidden">
+        <input type="text" placeholder="Search to edit..." onkeyup="search(this.value, 'set-list')">
+        <div id="set-list"></div>
+    </div>
+
+    <div id="detail-tab" class="tab-content hidden">
+        <button onclick="showTab('rec-tab')" class="btn" style="background:#444; margin-bottom:15px;">← Back</button>
+        <div id="full-detail-ui"></div>
+    </div>
+</div>
+
+<div id="successModal" class="modal">
+    <div class="modal-content" style="text-align:center;">
+        <h1 style="color:var(--green)">✓</h1>
+        <h2>Registration Confirmed</h2>
+        <div id="reg-success-info" style="margin:20px 0;"></div>
+        <button onclick="closeModal('successModal')" class="btn btn-pay btn-full">Done</button>
+    </div>
+</div>
+
+<div id="payModal" class="modal">
+    <div class="modal-content">
+        <h3>Collect Fee</h3>
+        <div id="pay-header" style="margin-bottom:15px; border-bottom:1px solid #333"></div>
+        <input type="number" id="pay-amt" placeholder="Amount (₹)">
+        <select id="pay-operator">
+            <option value="">Select Operator</option>
+            <option value="Admin">Admin</option>
+            <option value="Staff-1">Staff-1</option>
+            <option value="Manager">Manager</option>
+        </select>
+        <button onclick="confirmPay()" class="btn btn-pay btn-full">Pay & Generate Receipt</button>
+        <button onclick="closeModal('payModal')" class="btn btn-full" style="background:#444">Cancel</button>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Student Details</h3>
+        <div id="edit-form-box"></div>
+        <button onclick="saveEdit()" class="btn btn-pay btn-full">Save Changes</button>
+        <button onclick="closeModal('editModal')" class="btn btn-full" style="background:#444">Cancel</button>
+    </div>
+</div>
+
+<div id="msgModal" class="modal">
+    <div class="modal-content">
+        <h3>Send Creative Alert</h3>
+        <select id="msg-type" onchange="updateMsg()"><option value="0">Welcome</option><option value="1">Receipt</option><option value="2">Due Soon</option></select>
+        <textarea id="msg-body" rows="6"></textarea>
+        <button onclick="sendMsg('wa')" class="btn btn-msg btn-full">WhatsApp Alert</button>
+        <button onclick="sendMsg('mail')" class="btn btn-full" style="background:#EA4335">Gmail Alert</button>
+        <button onclick="closeModal('msgModal')" class="btn btn-full" style="background:#444">Close</button>
+    </div>
+</div>
+
+    
+ <div id="templateModal" class="modal">
+    <div class="modal-content">
+        <h3>Select Receipt Template</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+            <button onclick="setTemplate(1)" class="btn btn-edit">Standard (Blue)</button>
+            <button onclick="setTemplate(2)" class="btn btn-pay">Modern (Green)</button>
+            <button onclick="setTemplate(3)" class="btn" style="background:#6c5ce7;">Minimal (Purple)</button>
+            <button onclick="setTemplate(4)" class="btn" style="background:#e84393;">Elegant (Pink)</button>
+        </div>
+        <button onclick="closeModal('templateModal')" class="btn btn-full" style="background:#444; margin-top:15px;">Cancel</button>
+    </div>
+</div>
+   
+<div id="receipt-print"></div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="showTab('home-tab')">🏠<br>Home</div>
+    <div class="nav-item" onclick="showTab('rec-tab')">📚<br>History</div>
+    <div class="nav-item" onclick="showTab('set-tab')">⚙️<br>Manage</div>
+</nav>
+
+<script>
+    // FIREBASE SETUP
+        const firebaseConfig = {
+  apiKey: "AIzaSyCuXFwrxRswCuyp7kvjNPF2Rnv2pIfcEAw",
+  authDomain: "sba-academy-2006.firebaseapp.com",
+  projectId: "sba-academy-2006",
+  storageBucket: "sba-academy-2006.firebasestorage.app",
+  messagingSenderId: "877157856362",
+  appId: "1:877157856362:web:86c406e135e83682598613"
+};
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let students = [];
+    let currentId = null;
+    let selAv = "🎓";
+
+    // AVATARS
+    
+    const emojis = ["👨‍🎓","👧", "👨","👩", "👨‍🦱","👩‍🦰", "🧔‍","👩‍🦱", "👮","👮‍♀️", "👷‍♂️","👷‍♀️", "🕵️‍♂️", "👨‍⚕️", "👩‍⚕️","👨‍🎓", "👨‍🏫","👩‍🏫",];
+ 
+        function initAvs() {
+        const p = document.getElementById('av-picker');
+        emojis.forEach(e => {
+            const div = document.createElement('div');
+            div.className = 'av-circle'; div.innerText = e;
+            div.onclick = () => {
+                document.querySelectorAll('.av-circle').forEach(c=>c.classList.remove('selected'));
+                div.classList.add('selected'); selAv = e;
+            };
+            p.appendChild(div);
+        });
+        p.firstChild.classList.add('selected');
+    }
+
+    // SYNC
+    db.ref('students').on('value', snap => {
+        students = snap.val() ? Object.values(snap.val()) : [];
+        updateStats(); renderRec(); renderSet();
+    });
+
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t=>t.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    }
+    function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+    // REGISTRATION
+    document.getElementById('regForm').onsubmit = (e) => {
+       
+
+        e.preventDefault();
+        const id = Math.floor(1000 + Math.random() * 9000);
+        const data = {
+            id, avatar: selAv,
+            name: document.getElementById('sName').value,
+            father: document.getElementById('fName').value,
+            seat: document.getElementById('seatNo').value,
+            mobile: document.getElementById('mobile').value,
+            email: document.getElementById('email').value,
+            admDate: document.getElementById('admDate').value,
+            dueDate: 'Pending', status: 'Pending', payments: []
+        };
+        db.ref('students/'+id).set(data).then(()=>{
+            document.getElementById('reg-success-info').innerHTML = `<h3>${data.name}</h3><p>Unique ID: <b>${id}</b></p>`;
+            document.getElementById('successModal').style.display='block';
+            e.target.reset();
+        });
+    };
+
+    // HISTORY LIST (Only basic info as requested)
+    function renderRec() {
+        const list = document.getElementById('rec-list');
+        list.innerHTML = '';
+        students.forEach(s => {
+            const isPaid = s.status === 'Completed';
+            list.innerHTML += `
+                <div class="record-card ${isPaid?'status-paid':''}" onclick="viewAllDetails(${s.id})">
+                    <div class="row"><b>${s.name}</b> <small>ID: ${s.id}</small></div>
+                    <div class="row"><span class="label">Father:</span> <span>${s.father}</span></div>
+                    <div class="row"><span class="label">Seat:</span> <span>${s.seat}</span></div>
+                    <div class="row"><span class="label">Due:</span> <span style="color:var(--orange)">${s.dueDate}</span></div>
+                </div>`;
+        });
+    }
+
+    // ALL DETAILS VIEW (When card clicked)
+    function viewAllDetails(id) {
+        const s = students.find(x => x.id === id);
+        showTab('detail-tab');
+        let payRows = s.payments ? s.payments.map((p, i) => `
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px; margin-top:10px;">
+                <div class="row"><b>₹${p.amount}</b> <span>${p.date}</span></div>
+                <div class="row"><small>Op: ${p.op}</small> <button class="btn receipt-btn" onclick="openTemplateSelector(${s.id}, ${i})">Receipt</button></div>
+<button class="btn receipt-btn" onclick="genPDF(${s.id}, ${i})">PDF</button>
+<button class="btn" style="background:#ff7e5f; padding:6px 10px; font-size:11px; border-radius:6px;" onclick="shareReceiptImage(${s.id}, ${i})">Share Image 📱</button>
+
+            </div>`).join('') : 'No payment history';
+
+        document.getElementById('full-detail-ui').innerHTML = `
+            <div class="record-card status-paid" style="border:none; text-align:center;">
+                <div style="font-size:50px;">${s.avatar}</div>
+                <h2 style="margin:10px 0;">${s.name}</h2>
+                <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+                <div class="row"><span class="label">Seat No:</span> <b>${s.seat}</b></div>
+                <div class="row"><span class="label">Due Date:</span> <b style="color:var(--orange)">${s.dueDate}</b></div>
+                <div class="row"><span class="label">Father:</span> <span>${s.father}</span></div>
+                <div class="row"><span class="label">Gmail:</span> <span>${s.email}</span></div>
+                <div class="row"><span class="label">Mobile:</span> <span>${s.mobile}</span></div>
+                <div class="row"><span class="label">ID No:</span> <span>${s.id}</span></div>
+                <div class="row"><span class="label">Admission:</span> <span>${s.admDate}</span></div>
+                <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+                <h4 style="text-align:left; color:var(--green)">Payment Record (Top)</h4>
+                ${payRows}
+            </div>`;
+    }
+
+    
+    async function shareReceiptImage(sid, pIdx) {
+    const s = students.find(x => x.id === sid);
+    const p = s.payments[pIdx];
+    if (!s || !p) return alert("Data not found!");
+
+    const area = document.getElementById('receipt-print');
+    
+    // 1. Full Length UI Structure
+    area.innerHTML = `
+        <div id="capture-box" style="padding:25px; background:#ffffff; color:#333; width:280px; font-family:Arial, sans-serif; border-radius:0px;">
+            <div style="text-align:center; border-bottom:3px double #6c5ce7; padding-bottom:15px; margin-bottom:15px;">
+                <div style="font-size:35px;">📚</div>
+                <h2 style="color:#6c5ce7; margin:5px 0; letter-spacing:1px;">DIGITAL LIBRARY</h2>
+                <p style="font-size:10px; color:#666; margin:0;">STAY FOCUSED • ACHIEVE GOALS</p>
+            </div>
+
+            <div style="font-size:14px; line-height:2.0;">
+                <div style="display:flex; justify-content:space-between;"><b>Id No:</b> <span>#LIB-${s.id}</span></div>
+                <div style="display:flex; justify-content:space-between;"><b>Student:</b> <span>${s.name}</span></div>
+                <div style="display:flex; justify-content:space-between;"><b>Seat No:</b> <span style="color:#e815bc; font-weight:bold;">${s.seat}</span></div>
+                <div style="display:flex; justify-content:space-between;"><b>Father:</b> <span>${s.father}</span></div>
+                <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+                <div style="display:flex; justify-content:space-between; font-size:18px; color:#28a745;"><b>Amount Paid:</b> <b>₹${p.amount}</b></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#28a745;"><b>op:</b> <b>${p.op}</b></div>
+               
+                <div style="display:flex; justify-content:space-between;"><b>Date:</b> <span>${p.date}</span></div>
+                <div style="display:flex; justify-content:space-between;"><b>Valid From:</b> <span>${p.prevDue || 'N/A'}</span></div>
+                <div style="display:flex; justify-content:space-between; color:#ff7e5f;"><b>Valid Till:</b> <b>${p.validTill}</b></div>
+            </div>
+
+            <div style="margin-top:20px; text-align:center;">
+                <div id="qr-share" style="display:inline-block; padding:10px; background:#f9f9f9; border:1px solid #eee;"></div>
+                <p style="font-size:11px; color:#888; margin-top:10px;">This is a computer-generated digital receipt.</p>
+                <h4 style="margin-top:10px; color:#6c5ce7;">🙏 Thank You!</h4>
+            </div>
+        </div>`;
+
+    // QR Code generation
+    new QRCode(document.getElementById("qr-share"), { 
+        text: `ID:${s.id} | Name:${s.name} | Till:${p.validTill}`, 
+        width: 100, 
+        height: 100 
+    });
+
+    // 2. CSS for Hidden Capture (Crucial for Full Length)
+    area.style.display = 'block';
+    area.style.position = 'absolute';
+    area.style.top = '0';
+    area.style.left = '-9999px';
+    area.style.height = 'auto'; // Auto height for full content
+
+    // Thoda wait karein rendering ke liye
+    await new Promise(res => setTimeout(res, 400));
+
+    try {
+        const captureElement = document.getElementById('capture-box');
+        
+        // 3. Capture with Full Scroll Height
+        const canvas = await html2canvas(captureElement, {
+            scale: 3, // High quality
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            height: captureElement.scrollHeight, // Poori height capture karega
+            width: captureElement.scrollWidth
+        });
+
+        const dataUrl = canvas.toDataURL("image/png");
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], `Library_Receipt_${s.name}.png`, { type: "image/png" });
+
+        const shareText = `*📚 Digital Library Receipt*\n\n✅ *Name:* ${s.name}\n🪑 *Seat:* ${s.seat}\n💰 *Paid:* ₹${p.amount}\n⏳ *Valid Till:* ${p.validTill}\n\n_Success starts with focus!_ 🚀`;
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                text: shareText
+            });
+        } else {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `Receipt_${s.name}.png`;
+            link.click();
+        }
+    } catch (err) {
+        console.error("Full Length Capture Error:", err);
+        alert("Could not generate full image.");
+    } finally {
+        area.style.display = 'none';
+    }
+}
+
+
+    // MANAGE LIST (With Edit & All Details)
+    function renderSet() {
+        const list = document.getElementById('set-list');
+        list.innerHTML = '';
+        students.forEach(s => {
+            list.innerHTML += `
+                <div class="record-card">
+                    <div class="row"><b>${s.name} (Seat: ${s.seat})</b> <small>ID: ${s.id}</small></div>
+                    <div class="row"><span class="label">Father:</span> <span>${s.father}</span></div>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="btn btn-pay" style="flex:1" onclick="openPay(${s.id})">Pay</button>
+                        <button class="btn btn-edit" style="flex:1" onclick="openEdit(${s.id})">Edit</button>
+                        <button class="btn btn-msg" style="flex:1" onclick="openMsg(${s.id})">Alert</button>
+                        <button class="btn btn-danger" style="background:var(--red)" onclick="delS(${s.id})">Del</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // PAYMENT
+    function openPay(id) {
+        currentId = id; const s = students.find(x=>x.id===id);
+        document.getElementById('pay-header').innerHTML = `<p>${s.name}</p><b>Seat: ${s.seat}</b> /Due date: ${s.dueDate}`;
+        document.getElementById('payModal').style.display='block';
+    }
+   function confirmPay() {
+    const amt = document.getElementById('pay-amt').value;
+    const op = document.getElementById('pay-operator').value;
+    if(!amt || !op) return alert("Fill all details");
+
+    const s = students.find(x => x.id === currentId);
+    
+    // Purani date save karein
+    const oldDue = s.dueDate; 
+
+    // Nayi date calculate karein
+    let d = (s.dueDate === 'Pending') ? new Date() : new Date(s.dueDate);
+    d.setDate(d.getDate() + 30);
+    const newDueDate = d.toISOString().split('T')[0];
+
+    s.dueDate = newDueDate;
+    s.status = 'Completed';
+
+    if(!s.payments) s.payments = [];
+    
+    // RECORD SAVE: Yahan "prevDue" aur "validTill" dono save ho rahe hain
+    s.payments.unshift({ 
+        amount: amt, 
+        date: new Date().toLocaleDateString(), 
+        op: op,
+        prevDue: oldDue,       // Purani Date
+        validTill: newDueDate  // Nayi Date
+    });
+
+    db.ref('students/' + currentId).update(s);
+    closeModal('payModal');
+    
+    genPDF(currentId, 0);
+}
+
+
+
+    // EDIT
+    function openEdit(id) {
+        currentId = id; const s = students.find(x=>x.id===id);
+        document.getElementById('edit-form-box').innerHTML = `
+            <input type="text" id="ed-name" value="${s.name}">
+            <input type="text" id="ed-father" value="${s.father}">
+            <input type="text" id="ed-seat" value="${s.seat}">
+            <input type="tel" id="ed-mobile" value="${s.mobile}">
+            <input type="email" id="ed-email" value="${s.email}">
+        `;
+        document.getElementById('editModal').style.display='block';
+    }
+    function saveEdit() {
+        const upd = {
+            name: document.getElementById('ed-name').value,
+            father: document.getElementById('ed-father').value,
+            seat: document.getElementById('ed-seat').value,
+            mobile: document.getElementById('ed-mobile').value,
+            email: document.getElementById('ed-email').value
+        };
+        db.ref('students/'+currentId).update(upd);
+        closeModal('editModal');
+    }
+
+    // PDF RECEIPT
+   let tempSid, tempPidx;
+
+// 1. Selection Modal ko open karne ka function
+function openTemplateSelector(sid, pIdx) {
+    tempSid = sid;
+    tempPidx = pIdx;
+    const modal = document.getElementById('templateModal');
+    if(modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error("Modal not found in HTML!");
+    }
+}
+
+// 2. Template choose karke PDF trigger karna
+function setTemplate(type) {
+    // Modal band karna
+    const modal = document.getElementById('templateModal');
+    if(modal) modal.style.display = 'none';
+    
+    // PDF generate karna
+    genPDF(tempSid, tempPidx, type);
+}
+
+// 3. Main PDF Function
+function genPDF(sid, pIdx, templateType = 1) {
+    const s = students.find(x => x.id === sid);
+    const p = s.payments[pIdx];
+    if (!s || !p) return;
+
+   
+const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === 'Pending' || dateStr === 'N/A') return dateStr;
+    const d = new Date(dateStr);
+    
+    const day = String(d.getDate()).padStart(2, '0');
+    // getMonth() 0-11 return karta hai, isliye +1 karke padStart lagaya hai
+    const month = String(d.getMonth() + 1).padStart(2, '0'); 
+    const year = d.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+};
+
+    const area = document.getElementById('receipt-print');
+    area.style.display = 'block';
+    area.style.width = "300px"; // Fixed width for ATM look
+
+    let finalHTML = "";
+
+    switch (templateType) {
+        
+        
+case 1: // TEMPLATE 1: Professional E-Commerce (Segmented Details)
+    const txnID = "SH-" + Date.now().toString().slice(-6);
+    
+    finalHTML = `
+    <div style="width:320px; background:#fff; border:2px solid #000; font-family: Arial, sans-serif; color:#000; margin:0 auto; box-sizing:border-box;">
+        
+        <div style="padding:10px; border-bottom:2px solid #000;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:18px; font-weight:900; letter-spacing:-0.5px;">KLR LIBRARY</span>
+                <span style="border:1.5px solid #000; padding:1px 6px; font-size:10px; font-weight:bold;">STUDENT SLIP</span>
+            </div>
+            <div style="background:#000; color:#fff; padding:4px 8px; margin-bottom:8px;">
+                <small style="font-size:8px; display:block; opacity:0.8;">STUDENT NAME & ID</small>
+                <b style="font-size:16px; text-transform:uppercase;">${s.name} (#${s.id})</b>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <div><small style="font-size:9px; color:#666; display:block;">SEAT NO</small><b style="font-size:14px;">${s.seat}</b></div>
+                <div style="text-align:right;"><small style="font-size:9px; color:#666; display:block;">MOBILE</small><b style="font-size:12px;">${s.mobile || 'N/A'}</b></div>
+            </div>
+        </div>
+
+        <div style="padding:10px; background:#fff;">
+            <small style="font-size:9px; font-weight:bold; display:block; margin-bottom:5px; border-bottom:1px solid #eee;">PAYMENT & VALIDITY DETAILS</small>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+                <div>
+                    <small style="font-size:8px; color:#666; display:block;">PAYMENT DATE</small>
+                    <span style="font-size:11px; font-weight:bold;">${(p.date)}</span>
+                </div>
+                <div style="text-align:right;">
+                    <small style="font-size:8px; color:#666; display:block;">OPERATOR</small>
+                    <span style="font-size:11px; font-weight:bold; color:#28a745;">${p.op || 'Admin'}</span>
+                </div>
+                <div>
+                    <small style="font-size:8px; color:#666; display:block;">PREV. DUE DATE</small>
+                    <span style="font-size:11px;">${p.prevDue || 'None'}</span>
+                </div>
+                <div style="text-align:right;">
+                    <small style="font-size:8px; color:#666; display:block;">AMOUNT PAID</small>
+                    <span style="font-size:16px; font-weight:900;">₹${p.amount}</span>
+                </div>
+            </div>
+        <div style="text-align:center; margin-top:15px; padding-top:10px; border-top:1px solid #f1f2f6;">
+                <p style="margin:0; font-size:12px; color:#2d3436; font-weight:600;">Let's achieve your goals today! 🎯</p>
+                <small style="color:#b2bec3; font-size:9px;">Generated by KLR Hub System</small>
+            </div>
+
+            <div style="border:2px solid #000; padding:5px; display:flex; justify-content:space-between; align-items:center; background:#f9f9f9;">
+                <div style="text-align:center; flex:1;">
+                    <div id="qr" style="display:inline-block;"></div>
+                </div>
+                <div style="flex:1.5; text-align:right; border-left:1px solid #000; padding-left:10px;">
+                    <small style="font-size:9px; font-weight:bold; display:block;">NEXT DUE / EXPIRY</small>
+                    <b style="font-size:14px; background:#000; color:#fff; padding:2px 5px; display:inline-block; margin-top:3px;">${formatDate(p.validTill)}</b>
+                </div>
+            </div>
+        </div>
+
+        <div style="position:relative; border-top:2px dashed #000; margin:10px 0; text-align:center;">
+            <span style="position:absolute; top:-12px; left:10px; background:#fff; font-size:14px;">✂️</span>
+            <small style="font-size:8px; background:#fff; padding:0 10px; color:#666;">OFFICE COPY BELOW</small>
+        </div>
+
+        <div style="padding:10px; background:#f4f4f4;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <b style="font-size:11px;">OFFICE RECORD</b>
+                <span style="font-size:9px;">TXN: ${txnID}</span>
+            </div>
+            
+            <div style="font-size:10px; display:grid; grid-template-columns: 1.5fr 1fr; gap:5px;">
+                <div><b>Student:</b> ${s.name} (${s.id})</div>
+                <div style="text-align:right;"><b>Seat:</b> ${s.seat}</div>
+                <div><b>Paid:</b> ₹${p.amount} (${p.op || 'Admin'})</div>
+                <div style="text-align:right;"><b>Exp:</b> ${formatDate(p.validTill)}</div>
+            </div>
+            
+            <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:flex-end;">
+                <small style="font-size:8px; color:#888;">Auth. Sign</small>
+                <div style="width:70px; border-bottom:1px solid #000;"></div>
+            </div>
+        </div>
+    </div>`;
+    break;
+
+
+case 2: // TEMPLATE 2: Auto-Scaling Supermarket Style
+    // 1. Mobile Privacy
+    const rawMob = (s.mobile || s.phone || "0000000000").toString();
+    const sMob_2 = rawMob.slice(-6); 
+    const txnID_2 = "SH-" + Date.now().toString().slice(-5);
+
+    // 2. SCALING CONTROLS (Yahan se sab control hoga)
+    const baseWidth = 350;  // Width in px
+    const baseHeight = 600; // Height in px
+    const scale = 1.2;      // Is number ko badhao (1.2, 1.4, etc.) toh sab bada ho jayega
+
+    finalHTML = `
+    <div style="
+        width: ${baseWidth}px; 
+        height: ${baseHeight}px; 
+        background: #fff; 
+        font-family: 'Courier New', Courier, monospace; 
+        padding: ${10 * scale}px; 
+        color: #000; 
+        line-height: 1.2; 
+        margin: 0 auto; 
+        box-sizing: border-box; 
+        border: ${2 * scale}px solid #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        font-size: ${10 * scale}px;
+    ">
+        
+        <div>
+            <div style="text-align:center; border-bottom: ${2 * scale}px solid #000; padding-bottom: ${4 * scale}px; margin-bottom: ${8 * scale}px;">
+                <h2 style="margin:0; font-size: ${18 * scale}px; font-weight:bold;">KLR HUB</h2>
+                <p style="margin:0; font-size: ${9 * scale}px; text-transform:uppercase;">Montly Fee Receipt</p>
+            </div>
+
+            <div style="margin-bottom: ${10 * scale}px;">
+                <div style="background:#000; color:#fff; padding: ${2 * scale}px ${5 * scale}px; font-size: ${10 * scale}px; margin-bottom: ${5 * scale}px; font-weight:bold; display:inline-block; width:100%; box-sizing:border-box;">STUDENT PROFILE</div>
+                <div style="margin-top: ${4 * scale}px;">
+                    <span style="font-size: ${12 * scale}px;">NAME: <b>${s.name.toUpperCase()}</b></span><br>
+                    <span>ID  : #${s.id} | MOB: XXXXXX${sMob_2} | Op: ${p.op}</span>
+                </div>
+            </div>
+
+            <p style="margin: ${5 * scale}px 0; border-bottom: 1px dashed #000;"></p>
+            
+            <div style="font-size: ${11 * scale}px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: ${4 * scale}px;">
+                    <span>SEAT NUMBER:</span> <b>${s.seat}</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: ${4 * scale}px;">
+                    <span>PAYMENT DATE:</span> <b>${(p.date)}</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: ${4 * scale}px;">
+                    <span>PREV. DUE:</span> <b>₹${p.prevDue || '0'}</b>
+                </div>
+            </div>
+
+            <p style="margin: ${5 * scale}px 0; border-bottom: 1px dashed #000;"></p>
+
+            <div style="margin-top: ${5 * scale}px;">
+                <div style="display:flex; justify-content:space-between; font-size: ${16 * scale}px; font-weight:bold;">
+                    <span>NET PAID:</span> <span>₹${p.amount}.00</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top: ${5 * scale}px; background:#eee; padding: ${4 * scale}px; font-size: ${11 * scale}px; border: 1px solid #ccc;">
+                    <span>VALID TILL:</span> <b>${formatDate(p.validTill)}</b>
+                </div>
+        <div style="text-align:center; margin-top:15px; padding-top:10px; border-top:1px solid #f1f2f6;">
+                <p style="margin:0; font-size:12px; color:#2d3436; font-weight:600;">Let's achieve your goals today! 🎯</p>
+                <small style="color:#b2bec3; font-size:9px;">Generated by KLR Hub System</small>
+            </div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin: ${5 * scale}px 0;">
+            <div id="qr" style="display:inline-block; border: 1px solid #000; padding: ${3 * scale}px; transform: scale(${0.8 * scale});"></div>
+            <p style="font-size: ${8 * scale}px; margin-top: ${2 * scale}px; opacity:0.7;">Verified Transaction</p>
+        </div>
+
+        <div style="border-top: ${2 * scale}px dashed #000; padding-top: ${8 * scale}px;">
+            <div style="text-align:center; font-weight:bold; margin-bottom: ${6 * scale}px; font-size: ${10 * scale}px;">✂️ OFFICE RECORD COPY</div>
+            
+            <div style="font-size: ${9 * scale}px; display:grid; grid-template-columns: 1fr 1fr; gap: ${4 * scale}px;">
+                <div><b>NAME:</b> ${s.name}</div>
+                <div><b>ID:</b> #${s.id}</div>
+                <div><b>SEAT:</b> ${s.seat}</div>
+                <div><b>PAID:</b> ₹${p.amount}</div>
+                 <div><b>Op:</b> ${p.op}</div>
+                <div><b>DATE:</b> ${(p.date)}</div>
+                <div><b>MOB:</b> ${sMob_2}</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top: ${10 * scale}px;">
+                <div style="font-size: ${7 * scale}px; color:#666;">TXN: ${txnID_2}</div>
+                <div style="text-align:right;">
+                    <div style="border-top: 1px solid #000; width: ${60 * scale}px;"></div>
+                    <span style="font-size: ${9 * scale}px; font-weight:bold;">Manager</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center; font-size: ${9 * scale}px; margin-top: ${5 * scale}px;">
+            <p style="margin:0;">* Thanks for trusting our library for your goals—happy studying!*</p>
+        </div>
+        
+    </div>`;
+    break;
+
+
+       case 3: // TEMPLATE 3: Eco Premium (Scalable Multi-Color)
+    // 1. Mobile & ID Logic
+    const rawMob_3 = (s.mobile || s.phone || "0000000000").toString();
+    const sMob_3 = rawMob_3.slice(-6); // Only 6 digits
+    const sID_3 = s.id || "00";
+
+    // 2. SCALING CONTROLS
+    const baseWidth3 = 300;  // Initial Width
+    const baseHeight3 = 500; // Initial Height
+    const scale3 = .8;      // Isse badhane par font aur margin bade honge (e.g. 1.4)
+
+    finalHTML = `
+    <div style="
+        width: ${baseWidth3}px; 
+        height: ${baseHeight3}px; 
+        background: #ffffff; 
+        border: ${1 * scale3}px solid #e0e0e0; 
+        border-top: ${8 * scale3}px solid #2ecc71; 
+        border-radius: ${15 * scale3}px; 
+        font-family: 'Segoe UI', Tahoma, sans-serif; 
+        overflow: hidden; 
+        margin: 0 auto; 
+        box-sizing: border-box; 
+        box-shadow: 0 ${5 * scale3}px ${15 * scale3}px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    ">
+        
+        <div style="padding: ${15 * scale3}px; text-align: center; background: #f4fff7;">
+            <div style="font-size: ${32 * scale3}px; margin-bottom: ${5 * scale3}px;">🌿</div>
+            <h3 style="margin: 0; color: #1b5e20; font-size: ${18 * scale3}px; letter-spacing: ${1 * scale3}px; font-weight: 800;">ECO LIBRARY</h3>
+            <small style="color: #2ecc71; font-weight: bold; font-size: ${10 * scale3}px; text-transform: uppercase;">Official Admission Receipt</small>
+        </div>
+
+        <div style="padding: ${12 * scale3}px ${15 * scale3}px; text-align: left; border-bottom: ${1 * scale3}px dashed #eee;">
+            <h2 style="margin: 0; color: #2c3e50; font-size: ${18 * scale3}px; line-height: 1.2;">${s.name.toUpperCase()}</h2>
+            <div style="color: #999; font-size: ${11 * scale3}px; margin-top: ${2 * scale3}px;">Registration ID: <b style="color:#444;">#${sID_3} | op :${p.op}</b></div>
+        </div>
+        
+        <div style="padding: ${10 * scale3}px ${15 * scale3}px; display: grid; gap: ${8 * scale3}px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #e3f2fd; padding: ${8 * scale3}px ${12 * scale3}px; border-radius: ${8 * scale3}px;">
+                <span style="font-size: ${12 * scale3}px; color: #1565c0;">🪑 <b>Seat No:</b></span>
+                <b style="font-size: ${13 * scale3}px; color: #0d47a1;">${s.seat}</b>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: ${8 * scale3}px ${12 * scale3}px; border-radius: ${8 * scale3}px;">
+                <span style="font-size: ${12 * scale3}px; color: #ef6c00;">📞 <b>Contact:</b></span>
+                <b style="font-size: ${13 * scale3}px; color: #e65100;">XXXXXX${sMob_3}</b>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f3e5f5; padding: ${8 * scale3}px ${12 * scale3}px; border-radius: ${8 * scale3}px;">
+                <span style="font-size: ${12 * scale3}px; color: #7b1fa2;">📅 <b>Pay Date:</b></span>
+                <b style="font-size: ${13 * scale3}px; color: #4a148c;">${(p.date)}</b>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #e8f5e9; padding: ${10 * scale3}px ${12 * scale3}px; border-radius: ${8 * scale3}px; border: ${1 * scale3}px solid #c8e6c9; margin-top: ${5 * scale3}px;">
+                <span style="font-size: ${13 * scale3}px; color: #2e7d32; font-weight: bold;">💰 Amount Paid:</span>
+                <b style="font-size: ${18 * scale3}px; color: #1b5e20;">₹${p.amount}</b>
+            </div>
+             <div style="display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: ${8 * scale3}px ${12 * scale3}px; border-radius: ${8 * scale3}px;">
+                <span style="font-size: ${12 * scale3}px; color: #ef6c00;">👷‍♂️ <b>OP:</b></span>
+                <b style="font-size: ${13 * scale3}px; color: #e65100;">${p.op}</b>
+            </div>
+        </div>
+
+        <div style="padding: ${5 * scale3}px ${15 * scale3}px; text-align: center;">
+            <div id="qr" style="display: flex; justify-content: center; margin-bottom: ${10 * scale3}px; transform: scale(${0.7 * scale3});"></div>
+            <div style="border: ${2 * scale3}px solid #2ecc71; border-style: double; padding: ${8 * scale3}px; border-radius: ${10 * scale3}px; display: inline-block; width: 85%; background: #fff;">
+                <small style="display: block; font-size: ${9 * scale3}px; color: #e53935; font-weight: bold; text-transform: uppercase; margin-bottom: ${2 * scale3}px;">Valid Until Expiry</small>
+                <b style="color: #d32f2f; font-size: ${15 * scale3}px;">${formatDate(p.validTill)}</b>
+            </div>
+        </div>
+
+        <div style="background: #2ecc71; color: #fff; padding: ${8 * scale3}px; font-size: ${9 * scale3}px; text-align: center; font-weight: bold; letter-spacing: ${1 * scale3}px;">
+            VERIFIED BY SMART LIBRARY SYSTEM
+        </div>
+    </div>`;
+    break;
+
+
+
+        case 4: // TEMPLATE 4: Motivational Student Pass
+    finalHTML = `
+    <div style="width:330px; background:#ffffff; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border-radius:20px; overflow:hidden; box-shadow:0 15px 35px rgba(0,0,0,0.15); border:1px solid #e1e8ed;">
+        
+        <div style="background:linear-gradient(45deg, #00b894, #00cec9); padding:20px; text-align:center; color:white;">
+            <div style="font-size:30px; margin-bottom:5px;">🚀</div>
+            <h2 style="margin:0; letter-spacing:1px; font-size:20px;">FUTURE LEADERS HUB</h2>
+            <p style="margin:5px 0 0; font-size:11px; font-style:italic; opacity:0.9;">"Success is the sum of small efforts, repeated day in and day out."</p>
+        </div>
+
+        <div style="padding:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px; margin-bottom:15px;">
+                <div>
+                    <small style="color:#636e72; font-size:10px; display:block;">STUDENT</small>
+                    <b style="font-size:15px; color:#2d3436;">${s.name}</b>
+                    <div style="color: #999; font-size: 11px; margin-top: 2px;">Registration ID: <b style="color:#444;">${s.id}</b></div>
+        
+                </div>
+                <div style="text-align:right;">
+                    <small style="color:#636e72; font-size:10px; display:block;">SEAT NO.</small>
+                    <b style="font-size:15px; color:#00b894;">#${s.seat}</b>
+                </div>
+            </div>
+
+            <div style="margin-bottom:15px;">
+                <h4 style="margin:0 0 8px; font-size:12px; color:#2d3436; border-left:3px solid #00b894; padding-left:8px;">LIBRARY INFO</h4>
+                <div style="font-size:11px; color:#636e72; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <span>🕒 Open: 24/7 Access</span>
+                    <span>📶 High-Speed Wi-Fi</span>
+                    <span>❄️ AC Environment</span>
+                    <span>☕ RO Water & Coffee</span>
+                </div>
+            </div>
+
+            <div style="background:#f1f2f6; padding:10px; border-radius:10px; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold; color:#2d3436;">FEE PLAN: MONTHLY</span>
+                    <span style="font-size:16px; font-weight:900; color:#00b894;">₹${p.amount}</span>
+                </div>
+                <div style="font-size:10px; color:#636e72; margin-top:5px;">
+                    Validity: ${p.prevDue || 'N/A'} To ${formatDate(p.validTill)}
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:15px; border:1px dashed #ced6e0; padding:10px; border-radius:10px;">
+                <div id="qr" style="flex-shrink:0;"></div>
+                <div style="font-size:11px;">
+                    <b style="display:block; margin-bottom:3px; color:#2d3436;">Help us improve!</b>
+                    <p style="margin:0; color:#636e72;">Share your feedback at the front desk or scan the code.</p>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:15px; padding-top:10px; border-top:1px solid #f1f2f6;">
+                <p style="margin:0; font-size:12px; color:#2d3436; font-weight:600;">Let's achieve your goals today! 🎯</p>
+                <small style="color:#b2bec3; font-size:9px;">Generated by Study Hub System</small>
+            </div>
+        </div>
+    </div>`;
+    break;
+        
+    }
+    
+    area.innerHTML = finalHTML;
+
+    // QR Code
+    const qrDiv = area.querySelector("#qr");
+    new QRCode(qrDiv, { text: `ID:${s.id}|${s.name}`, width: 80, height: 80 });
+
+    /// --- PDF Export Logic ---
+setTimeout(() => {
+    const opt = {
+        margin: [10, 10, 10, 10], // Charo side se 10mm ka fix margin
+        filename: `Receipt_${s.name}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { 
+            scale: 3, 
+            useCORS: true, 
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', // A4 page par center aayega
+            orientation: 'portrait' 
+        }
+    };
+
+    html2pdf().set(opt).from(area).save().then(() => {
+        area.style.display = 'none'; 
+    });
+}, 800);
+
+}
+
+
+    // ALERTS
+    const tpls = [
+`✨📚 *DIGITAL LIBRARY WELCOME* 📚✨
+
+👋 Hello *{name}*,
+
+🎉 Your registration is *successfully completed!*
+━━━━━━━━━━━━━━━
+🆔 *Student ID:* {id}  
+🪑 *Seat No:* {seat}
+━━━━━━━━━━━━━━━
+
+🚀 Start your learning journey today!
+💡 "Knowledge is power"
+
+Happy Studying! 😊`,
+
+`💸✅ *PAYMENT RECEIVED* ✅💸
+
+👤 Dear *{name}*,
+
+🎉 We have received your payment successfully!
+━━━━━━━━━━━━━━━
+💰 *Amount:* ₹{amt}  
+🪑 *Seat:* {seat}  
+📅 *Next Due:* {due}
+━━━━━━━━━━━━━━━
+
+🙏 Thank you for staying with us!
+📘 Keep learning, keep growing! 🌱`,
+
+`⚠️⏳ *PAYMENT REMINDER* ⏳⚠️
+
+👋 Hi *{name}*,
+
+📢 This is a gentle reminder!
+━━━━━━━━━━━━━━━
+🪑 *Seat:* {seat}  
+📅 *Expiry Date:* *{due}*
+━━━━━━━━━━━━━━━
+
+❗ Please renew your subscription on time  
+to avoid interruption in services.
+
+💬 Need help? Contact us anytime!`,
+
+`🎓📖 *STUDY UPDATE ALERT* 📖🎓
+
+Hey *{name}* 👋
+
+✨ Your seat *{seat}* is active and ready!
+📅 Make sure to stay updated before *{due}*
+
+🔥 Tip of the Day:
+"Small steps daily = Big success tomorrow"
+
+Keep going! 💪`,
+
+`🌈🎯 *SUCCESS STARTS HERE* 🎯🌈
+
+Hello *{name}*,
+
+🪑 Your seat *{seat}* is now reserved!
+🆔 ID: {id}
+
+📌 Stay consistent  
+📌 Stay focused  
+📌 Achieve your goals
+
+🚀 Your journey begins now!`
+];
+    function openMsg(id) { currentId = id; document.getElementById('msgModal').style.display='block'; updateMsg(); }
+    function updateMsg() {
+        const s = students.find(x=>x.id===currentId);
+        const t = tpls[document.getElementById('msg-type').value];
+        const a = s.payments ? s.payments[0].amount : "0";
+        document.getElementById('msg-body').value = t.replace('{name}', s.name).replace('{id}', s.id).replace('{seat}', s.seat).replace('{due}', s.dueDate).replace('{amt}', a);
+    }
+    function sendMsg(mode) {
+        const s = students.find(x=>x.id===currentId);
+        const txt = encodeURIComponent(document.getElementById('msg-body').value);
+        if(mode==='wa') window.open(`https://wa.me/${s.mobile}?text=${txt}`);
+        else window.open(`mailto:${s.email}?subject=Library Alert&body=${txt}`);
+    }
+
+    function delS(id) { if(confirm("Delete permanently?")) db.ref('students/'+id).remove(); }
+    function search(q, l) {
+        const f = q.toLowerCase(); const cards = document.getElementById(l).getElementsByClassName('record-card');
+        for (let c of cards) c.style.display = c.innerText.toLowerCase().includes(f) ? "" : "none";
+    }
+    function updateStats() {
+        document.getElementById('stat-total').innerText = students.length;
+        document.getElementById('stat-active').innerText = students.filter(s=>s.status==='Completed').length;
+    }
+    initAvs();
+    
+   
+</script>
+</body>
+</html>
