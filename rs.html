@@ -2,131 +2,209 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <title>KLR Attendhance - Permission Fixed</title>
-    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KLR Institute - Pro Attendance System</title>
+    
+    <script src="https://unpkg.com/html5-qr-code" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; max-width: 600px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        #preview { width: 100%; border-radius: 8px; background: #000; margin-bottom: 10px; }
-        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
-        .btn-scan { background: #2563eb; color: white; }
-        .btn-add { background: #16a34a; color: white; }
-        .hidden { display: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #eee; border-radius: 10px; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 6px; flex: 1; min-width: 200px; }
+        
+        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        button:hover { opacity: 0.8; }
+
+        #reader { width: 100%; max-width: 450px; margin: 20px auto; border-radius: 10px; overflow: hidden; display: none; border: 2px solid #3498db; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #3498db; color: white; }
+        .qr-canvas { display: flex; justify-content: center; }
+        
+        .status-msg { padding: 10px; margin: 10px 0; border-radius: 5px; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>KLR Attendance System</h2>
-    
-    <div id="reg-form">
-        <input type="text" id="stu-name" placeholder="Student Name" style="padding:10px; width:70%">
-        <button class="btn btn-add" onclick="addStudent()">Add Student</button>
+<div class="container">
+    <h2>KLR Institute - Management System</h2>
+
+    <div class="section">
+        <h3>1. Student Registration</h3>
+        <div class="controls">
+            <input type="text" id="studentName" placeholder="Student ka poora naam likhein...">
+            <button class="btn-success" onclick="registerStudent()">Add & Generate QR</button>
+        </div>
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>4-Digit ID</th>
+                    <th>Name</th>
+                    <th>QR Code</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="studentData"></tbody>
+        </table>
     </div>
 
-    <div style="margin-top:20px;">
-        <button class="btn btn-scan" onclick="startCamera()">1. Click here to Enable Camera</button>
-        <video id="preview"></video>
+    <div class="section">
+        <h3>2. Attendance Scanner</h3>
+        <div class="controls">
+            <button class="btn-primary" onclick="toggleScanner()">Start/Stop Live Camera</button>
+            <button class="btn-danger" onclick="downloadPDF()">Export Attendance PDF</button>
+        </div>
+        <div id="status" class="status-msg"></div>
+        <div id="reader"></div>
+
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceData"></tbody>
+        </table>
     </div>
-
-    <button class="btn" style="background:#ef4444; color:white" onclick="exportPDF()">Export PDF</button>
-
-    <h3>Student List & Records</h3>
-    <table>
-        <thead>
-            <tr><th>ID</th><th>Name</th><th>QR</th><th>Action</th></tr>
-        </thead>
-        <tbody id="stu-table"></tbody>
-    </table>
 </div>
 
 <script>
     let students = JSON.parse(localStorage.getItem('klr_students')) || [];
-    let scanner = null;
+    let attendanceLog = JSON.parse(localStorage.getItem('klr_attendance')) || [];
+    let html5QrCode = null;
 
-    // 1. Start Camera and Request Permission
-    function startCamera() {
-        scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
-        
-        scanner.addListener('scan', function (content) {
-            markAttendance(content);
-        });
+    // --- Student Logic ---
+    function registerStudent() {
+        const nameInput = document.getElementById('studentName');
+        if (!nameInput.value) return alert("Naam likhna zaroori hai!");
 
-        Instascan.Camera.getCameras().then(function (cameras) {
-            if (cameras.length > 0) {
-                // Mobile ke liye hamesha peeche wala camera select karega
-                let selectedCam = cameras.length > 1 ? cameras[1] : cameras[0];
-                scanner.start(selectedCam).catch(e => alert("Permission Denied: " + e));
-            } else {
-                alert('No cameras found. Please connect a camera.');
-            }
-        }).catch(function (e) {
-            alert("Camera Error: " + e);
-        });
-    }
-
-    function addStudent() {
-        let name = document.getElementById('stu-name').value;
-        if(!name) return alert("Naam likhiye");
-        let id = Math.floor(1000 + Math.random() * 9000).toString();
-        students.push({id, name});
+        const id = Math.floor(1000 + Math.random() * 9000).toString();
+        students.push({ id, name: nameInput.value });
         localStorage.setItem('klr_students', JSON.stringify(students));
-        document.getElementById('stu-name').value = "";
-        render();
+        nameInput.value = "";
+        refreshData();
     }
 
     function deleteStudent(id) {
-        students = students.filter(s => s.id !== id);
-        localStorage.setItem('klr_students', JSON.stringify(students));
-        render();
-    }
-
-    function markAttendance(id) {
-        let student = students.find(s => s.id === id);
-        if(student) {
-            alert("Attendance Marked: " + student.name);
-            // Yahan aap attendance log save karne ka code daal sakte hain
-        } else {
-            alert("Unknown QR Code!");
+        if(confirm("Kya aap is student ko hatana chahte hain?")) {
+            students = students.filter(s => s.id !== id);
+            localStorage.setItem('klr_students', JSON.stringify(students));
+            refreshData();
         }
     }
 
-    function render() {
-        let tbody = document.getElementById('stu-table');
-        tbody.innerHTML = "";
-        students.forEach(s => {
-            let row = `<tr>
-                <td>${s.id}</td>
-                <td>${s.name}</td>
-                <td><div id="qr-${s.id}"></div></td>
-                <td><button onclick="deleteStudent('${s.id}')">Delete</button></td>
-            </tr>`;
-            tbody.innerHTML += row;
-            setTimeout(() => {
-                new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 50, height: 50 });
-            }, 10);
+    // --- Scanner Logic (Permission Fixed) ---
+    async function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        
+        if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop();
+            readerDiv.style.display = 'none';
+            return;
+        }
+
+        readerDiv.style.display = 'block';
+        html5QrCode = new Html5Qrcode("reader");
+
+        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+
+        // Requesting Camera
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
+            (decodedText) => {
+                processAttendance(decodedText);
+            },
+            (errorMessage) => { /* Scanning... */ }
+        ).catch(err => {
+            alert("Camera Error: " + err + "\n\nTip: Please use HTTPS or Live Server (Localhost).");
+            readerDiv.style.display = 'none';
         });
     }
 
-    function exportPDF() {
+    function processAttendance(id) {
+        const student = students.find(s => s.id === id);
+        if (!student) {
+            showStatus("Ghalat QR Code!", "#e74c3c");
+            return;
+        }
+
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        const time = now.toLocaleTimeString();
+
+        // Duplicate Check
+        const alreadyMarked = attendanceLog.find(a => a.id === id && a.date === date);
+        if (alreadyMarked) {
+            showStatus(student.name + " ki attendance pehle hi lag chuki hai!", "#f39c12");
+            return;
+        }
+
+        attendanceLog.push({ id, name: student.name, date, time });
+        localStorage.setItem('klr_attendance', JSON.stringify(attendanceLog));
+        showStatus("Attendance Success: " + student.name, "#27ae60");
+        refreshData();
+    }
+
+    // --- UI Helpers ---
+    function showStatus(msg, color) {
+        const s = document.getElementById('status');
+        s.innerText = msg;
+        s.style.display = 'block';
+        s.style.backgroundColor = color;
+        s.style.color = 'white';
+        setTimeout(() => s.style.display = 'none', 3000);
+    }
+
+    function refreshData() {
+        // Students Table
+        const sBody = document.getElementById('studentData');
+        sBody.innerHTML = "";
+        students.forEach(s => {
+            const row = sBody.insertRow();
+            row.innerHTML = `<td>${s.id}</td><td>${s.name}</td><td class="qr-canvas"><div id="qr-${s.id}"></div></td><td><button class="btn-danger" onclick="deleteStudent('${s.id}')">Delete</button></td>`;
+            new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 60, height: 60 });
+        });
+
+        // Attendance Table
+        const aBody = document.getElementById('attendanceData');
+        aBody.innerHTML = "";
+        attendanceLog.slice().reverse().forEach(a => {
+            aBody.innerHTML += `<tr><td>${a.id}</td><td>${a.name}</td><td>${a.date}</td><td>${a.time}</td></tr>`;
+        });
+    }
+
+    function downloadPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("KLR Student List", 14, 15);
+        doc.setFontSize(18);
+        doc.text("KLR INSTITUTE - ATTENDANCE REPORT", 14, 20);
+        
+        const data = attendanceLog.map(a => [a.id, a.name, a.date, a.time]);
         doc.autoTable({
-            head: [['ID', 'Name']],
-            body: students.map(s => [s.id, s.name]),
-            startY: 20
+            head: [['Student ID', 'Name', 'Date', 'Time']],
+            body: data,
+            startY: 30,
+            theme: 'grid'
         });
-        doc.save("Students.pdf");
+        doc.save("KLR_Attendance.pdf");
     }
 
-    render();
+    window.onload = refreshData;
 </script>
 </body>
 </html>
