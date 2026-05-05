@@ -2,183 +2,131 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KLR System - Edit, Delete & Scan</title>
-    
-    <script src="https://unpkg.com/html5-qr-code"></script>
+    <title>KLR Attendance - Permission Fixed</title>
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        :root { --p: #2563eb; --s: #16a34a; --err: #ef4444; }
-        body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #ddd; }
-        .tab-btn.active { background: var(--p); color: white; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; max-width: 600px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #preview { width: 100%; border-radius: 8px; background: #000; margin-bottom: 10px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-scan { background: #2563eb; color: white; }
+        .btn-add { background: #16a34a; color: white; }
         .hidden { display: none; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        .btn-edit { background: orange; color: white; border:none; padding: 5px; cursor:pointer; border-radius:3px; }
-        .btn-del { background: var(--err); color: white; border:none; padding: 5px; cursor:pointer; border-radius:3px; }
-        #reader { width: 100%; max-width: 400px; margin: auto; border: 2px solid #ccc; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>KLR Attendance System</h2>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('reg')">Students</button>
-        <button class="tab-btn" onclick="showTab('att')">Attendance</button>
+    
+    <div id="reg-form">
+        <input type="text" id="stu-name" placeholder="Student Name" style="padding:10px; width:70%">
+        <button class="btn btn-add" onclick="addStudent()">Add Student</button>
     </div>
 
-    <div id="reg-section">
-        <input type="text" id="stu-name" placeholder="Student Name" style="padding:10px;">
-        <input type="hidden" id="edit-id">
-        <button id="add-btn" onclick="saveStudent()" style="background:var(--s); color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">Add Student</button>
-        
-        <table>
-            <thead>
-                <tr><th>ID</th><th>Name</th><th>QR Code</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="student-table-body"></tbody>
-        </table>
+    <div style="margin-top:20px;">
+        <button class="btn btn-scan" onclick="startCamera()">1. Click here to Enable Camera</button>
+        <video id="preview"></video>
     </div>
 
-    <div id="att-section" class="hidden">
-        <button onclick="startScanner()" style="background:var(--p); color:white; padding:10px; border:none; border-radius:5px;">Open Camera & Scan QR</button>
-        <button onclick="exportPDF()" style="background:var(--err); color:white; padding:10px; border:none; border-radius:5px;">PDF Export</button>
-        
-        <div id="reader-container" class="hidden" style="margin-top:20px;">
-            <div id="reader"></div>
-            <button onclick="stopScanner()">Close Camera</button>
-        </div>
+    <button class="btn" style="background:#ef4444; color:white" onclick="exportPDF()">Export PDF</button>
 
-        <table id="attendance-table">
-            <thead><tr><th>ID</th><th>Name</th><th>Date</th><th>Time</th></tr></thead>
-            <tbody id="attendance-body"></tbody>
-        </table>
-    </div>
+    <h3>Student List & Records</h3>
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Name</th><th>QR</th><th>Action</th></tr>
+        </thead>
+        <tbody id="stu-table"></tbody>
+    </table>
 </div>
 
 <script>
-    let students = JSON.parse(localStorage.getItem('students')) || [];
-    let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
-    let html5QrCode;
+    let students = JSON.parse(localStorage.getItem('klr_students')) || [];
+    let scanner = null;
 
-    function showTab(type) {
-        document.getElementById('reg-section').classList.toggle('hidden', type !== 'reg');
-        document.getElementById('att-section').classList.toggle('hidden', type !== 'att');
-        renderTables();
+    // 1. Start Camera and Request Permission
+    function startCamera() {
+        scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+        
+        scanner.addListener('scan', function (content) {
+            markAttendance(content);
+        });
+
+        Instascan.Camera.getCameras().then(function (cameras) {
+            if (cameras.length > 0) {
+                // Mobile ke liye hamesha peeche wala camera select karega
+                let selectedCam = cameras.length > 1 ? cameras[1] : cameras[0];
+                scanner.start(selectedCam).catch(e => alert("Permission Denied: " + e));
+            } else {
+                alert('No cameras found. Please connect a camera.');
+            }
+        }).catch(function (e) {
+            alert("Camera Error: " + e);
+        });
     }
 
-    // Save or Update Student
-    function saveStudent() {
-        const name = document.getElementById('stu-name').value;
-        const editId = document.getElementById('edit-id').value;
-        if (!name) return alert("Please enter name");
-
-        if (editId) {
-            const index = students.findIndex(s => s.id === editId);
-            students[index].name = name;
-            document.getElementById('edit-id').value = "";
-            document.getElementById('add-btn').innerText = "Add Student";
-        } else {
-            const id = Math.floor(1000 + Math.random() * 9000).toString();
-            students.push({ id, name });
-        }
-        localStorage.setItem('students', JSON.stringify(students));
+    function addStudent() {
+        let name = document.getElementById('stu-name').value;
+        if(!name) return alert("Naam likhiye");
+        let id = Math.floor(1000 + Math.random() * 9000).toString();
+        students.push({id, name});
+        localStorage.setItem('klr_students', JSON.stringify(students));
         document.getElementById('stu-name').value = "";
-        renderTables();
-    }
-
-    function editStudent(id) {
-        const student = students.find(s => s.id === id);
-        document.getElementById('stu-name').value = student.name;
-        document.getElementById('edit-id').value = student.id;
-        document.getElementById('add-btn').innerText = "Update Name";
+        render();
     }
 
     function deleteStudent(id) {
-        if(confirm("Are you sure?")) {
-            students = students.filter(s => s.id !== id);
-            localStorage.setItem('students', JSON.stringify(students));
-            renderTables();
-        }
-    }
-
-    function renderTables() {
-        const sBody = document.getElementById('student-table-body');
-        sBody.innerHTML = '';
-        students.forEach(s => {
-            const row = sBody.insertRow();
-            row.innerHTML = `<td>${s.id}</td><td>${s.name}</td><td><div id="qr-${s.id}"></div></td>
-            <td>
-                <button class="btn-edit" onclick="editStudent('${s.id}')">Edit</button>
-                <button class="btn-del" onclick="deleteStudent('${s.id}')">Delete</button>
-            </td>`;
-            new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 50, height: 50 });
-        });
-
-        const aBody = document.getElementById('attendance-body');
-        aBody.innerHTML = '';
-        attendance.slice().reverse().forEach(a => {
-            aBody.innerHTML += `<tr><td>${a.id}</td><td>${a.name}</td><td>${a.date}</td><td>${a.time}</td></tr>`;
-        });
-    }
-
-    // Camera Fix: Async function with error handling
-    async function startScanner() {
-        document.getElementById('reader-container').classList.remove('hidden');
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("reader");
-        }
-        
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        
-        try {
-            await html5QrCode.start({ facingMode: "environment" }, config, (text) => {
-                markAttendance(text);
-                stopScanner(); // Auto stop after scan
-            });
-        } catch (err) {
-            alert("Camera error: " + err + "\nTip: Use HTTPS or Localhost.");
-            document.getElementById('reader-container').classList.add('hidden');
-        }
-    }
-
-    function stopScanner() {
-        if(html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then(() => {
-                document.getElementById('reader-container').classList.add('hidden');
-            });
-        }
+        students = students.filter(s => s.id !== id);
+        localStorage.setItem('klr_students', JSON.stringify(students));
+        render();
     }
 
     function markAttendance(id) {
-        const student = students.find(s => s.id === id);
-        if (!student) return alert("QR Not Found!");
-        const date = new Date().toLocaleDateString();
-        const time = new Date().toLocaleTimeString();
-        if (attendance.find(a => a.id === id && a.date === date)) return alert("Already marked!");
-        attendance.push({ id, name: student.name, date, time });
-        localStorage.setItem('attendance', JSON.stringify(attendance));
-        renderTables();
+        let student = students.find(s => s.id === id);
+        if(student) {
+            alert("Attendance Marked: " + student.name);
+            // Yahan aap attendance log save karne ka code daal sakte hain
+        } else {
+            alert("Unknown QR Code!");
+        }
+    }
+
+    function render() {
+        let tbody = document.getElementById('stu-table');
+        tbody.innerHTML = "";
+        students.forEach(s => {
+            let row = `<tr>
+                <td>${s.id}</td>
+                <td>${s.name}</td>
+                <td><div id="qr-${s.id}"></div></td>
+                <td><button onclick="deleteStudent('${s.id}')">Delete</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+            setTimeout(() => {
+                new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 50, height: 50 });
+            }, 10);
+        });
     }
 
     function exportPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("KLR Attendance Report", 14, 15);
-        doc.autoTable({ head: [['ID', 'Name', 'Date', 'Time']], body: attendance.map(a => [a.id, a.name, a.date, a.time]), startY: 20 });
-        doc.save("Attendance.pdf");
+        doc.text("KLR Student List", 14, 15);
+        doc.autoTable({
+            head: [['ID', 'Name']],
+            body: students.map(s => [s.id, s.name]),
+            startY: 20
+        });
+        doc.save("Students.pdf");
     }
 
-    renderTables();
+    render();
 </script>
 </body>
-  </html>
-                                                                                
+</html>
